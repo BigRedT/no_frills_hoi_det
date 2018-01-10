@@ -26,6 +26,7 @@ class HicoConstants(io.JsonSerializableClass):
         self.images_dir = os.path.join(self.clean_dir,'images')
 
         # Processed constants
+        self.anno_list_json = os.path.join(self.proc_dir,'anno_list.json')
         self.hoi_list_json = os.path.join(self.proc_dir,'hoi_list.json')
         self.object_list_json = os.path.join(self.proc_dir,'object_list.json')
         self.verb_list_json = os.path.join(self.proc_dir,'verb_list.json')
