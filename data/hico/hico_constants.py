@@ -30,3 +30,12 @@ class HicoConstants(io.JsonSerializableClass):
         self.hoi_list_json = os.path.join(self.proc_dir,'hoi_list.json')
         self.object_list_json = os.path.join(self.proc_dir,'object_list.json')
         self.verb_list_json = os.path.join(self.proc_dir,'verb_list.json')
+
+
+class HicoBoxesConstants(HicoConstants):
+    def __init__(
+            self,
+            clean_dir='/home/ssd/hico_det_clean_20160224',
+            proc_dir='/home/ssd/hico_det_processed_20160224'):
+        super(HicoBoxesConstants,self).__init__(clean_dir,proc_dir)
+        self.faster_rcnn_boxes = os.path.join(self.proc_dir,'faster_rcnn_boxes')
