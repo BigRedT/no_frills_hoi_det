@@ -8,7 +8,7 @@ from utils.constants import ExpConstants
 from exp.experimenter import *
 
 
-def exp_detect_coco_objects():
+def exp_detect_coco_objects_in_hico():
     exp_name = 'detect_coco_objects_in_hico'
     exp_const = ExpConstants(
         exp_name=exp_name,
@@ -18,7 +18,7 @@ def exp_detect_coco_objects():
         clean_dir='/home/ssd/hico_det_clean_20160224',
         proc_dir='/home/ssd/hico_det_processed_20160224')
 
-    prepare_data_for_faster_rcnn.prepare(exp_const,data_const)
+    prepare_data_for_faster_rcnn.prepare_hico(exp_const,data_const)
 
 
 def exp_select_confident_boxes():
