@@ -3,7 +3,7 @@ import os
 import utils.io as io
 
 
-def prepare(exp_const,data_const):
+def prepare_hico(exp_const,data_const):
     io.mkdir_if_not_exists(exp_const.exp_dir)
     
     print('Writing constants to exp dir ...')
