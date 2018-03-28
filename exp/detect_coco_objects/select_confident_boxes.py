@@ -7,79 +7,83 @@ from utils.bbox_utils import compute_area
 from exp.detect_coco_objects.coco_classes import COCO_CLASSES
 
 
-def select_boxes_inner(dets,score_thresh,max_dets):
-    ids_ = np.nonzero(dets[:,-1]>score_thresh)[0]
-    ids = []
-    for i, idx in enumerate(ids_.tolist()):
-        if i==max_dets:
-            break
+def select_det_ids(boxes,scores,nms_keep_ids,score_thresh,max_dets):
+    if nms_keep_ids is None:
+        nms_keep_ids = np.arange(0,scores.shape[0])
+    
+    # Select non max suppressed dets
+    nms_scores = scores[nms_keep_ids]
+    nms_boxes = boxes[nms_keep_ids]
 
-        area = compute_area(dets[idx,:4],invalid=-1)
+    # Select dets above a score_thresh and which have area > 1
+    nms_ids_above_thresh = np.nonzero(nms_scores > score_thresh)[0]
+    nms_ids = []
+    for i in range(min(nms_ids_above_thresh.shape[0],max_dets)):
+        area = compute_area(nms_boxes[i],invalid=-1)
         if area > 1:
-            ids.append(idx)
+            nms_ids.append(i)
         
-    if len(ids)==0:
-        for i in range(dets.shape[0]):
-            area = compute_area(dets[i,:4],invalid=-1)
+    # If no dets satisfy previous criterion select the highest ranking one with area > 1
+    if len(nms_ids)==0:
+        for i in range(nms_keep_ids.shape[0]):
+            area = compute_area(nms_boxes[i],invalid=-1)
             if area > 1:
-                ids = [i]
+                nms_ids = [i]
                 break
 
-    ids = np.array(ids,dtype=np.int32)
+    # Convert nms ids to box ids
+    nms_ids = np.array(nms_ids,dtype=np.int32)
+    try:
+        ids = nms_keep_ids[nms_ids]
+    except:
+        import pdb; pdb.set_trace()
 
-    if ids.shape[0]==0:
-        select_dets = None
-    elif ids.shape[0] > max_dets:
-        select_dets = dets[ids[:max_dets],:]
-    else:
-        select_dets = dets[ids,:]
-
-    return select_dets
+    return ids
         
 
-def select_boxes(
+def select_dets(
         boxes,
         scores,
         nms_keep_indices,
         exp_const):
-
-    select_dets = {
-        'human': None,
-        'object': [],
-        'background': None,
+    selected_dets = {
+        'boxes': {},
+        'scores': {},
+        'rpn_ids': {}
     }
-
+    
     for cls_ind, cls_name in enumerate(COCO_CLASSES):
         cls_boxes = boxes[:, 4*cls_ind:4*(cls_ind + 1)]
         cls_scores = scores[:, cls_ind]
-        dets = np.hstack((cls_boxes,
-                          cls_scores[:, np.newaxis])).astype(np.float32)
-        dets = dets[nms_keep_indices[cls_ind], :]
+        cls_nms_keep_ids = np.array(nms_keep_indices[cls_ind])
+
         if cls_name=='person':
-            select_dets['human'] = select_boxes_inner(
-                dets,
+            select_ids = select_det_ids(
+                cls_boxes,
+                cls_scores,
+                cls_nms_keep_ids,
                 exp_const.human_score_thresh,
                 exp_const.max_humans)
         elif cls_name=='background':
-            select_dets['background'] = select_boxes_inner(
-                dets,
+            select_ids = select_det_ids(
+                cls_boxes,
+                cls_scores,
+                cls_nms_keep_ids,
                 exp_const.background_score_thresh,
                 exp_const.max_background)
         else:
-            select_dets_ = select_boxes_inner(
-                dets,
+            select_ids = select_det_ids(
+                cls_boxes,
+                cls_scores,
+                cls_nms_keep_ids,
                 exp_const.object_score_thresh,
                 exp_const.max_objects_per_class)
                 
-            if select_dets_ is not None:
-                select_dets['object'].append(select_dets_)
-
-    if len(select_dets['object'])==0:
-        select_dets['object'].append(select_dets['background'])
-
-    select_dets['object'] = np.concatenate(select_dets['object'])
+        selected_dets['boxes'][cls_name] = cls_boxes[select_ids]
+        selected_dets['scores'][cls_name] = cls_scores[select_ids]
+        selected_dets['rpn_ids'][cls_name] = select_ids
     
-    return select_dets
+    return selected_dets
 
 
 def select(exp_const,data_const):
@@ -93,6 +97,10 @@ def select(exp_const,data_const):
         f'object_thresh_{exp_const.object_score_thresh}_' + \
         f'max_{exp_const.max_objects_per_class}')
     io.mkdir_if_not_exists(select_boxes_dir)
+
+    # Print where the boxes are coming from and where the output is written
+    print(f'Boxes will be read from: {data_const.faster_rcnn_boxes}')
+    print(f'Boxes will be written to: {select_boxes_dir}')
     
     print('Writing constants to exp dir ...')
     data_const_json = os.path.join(exp_const.exp_dir,'data_const.json')
@@ -107,22 +115,24 @@ def select(exp_const,data_const):
     print('Selecting boxes ...')
     for anno in tqdm(anno_list):
         global_id = anno['global_id']
+
         boxes_npy = os.path.join(
             data_const.faster_rcnn_boxes,
             f'{global_id}_boxes.npy')
         boxes = np.load(boxes_npy)
+        
         scores_npy = os.path.join(
             data_const.faster_rcnn_boxes,
             f'{global_id}_scores.npy')
         scores = np.load(scores_npy)
+        
         nms_keep_indices_json = os.path.join(
             data_const.faster_rcnn_boxes,
             f'{global_id}_nms_keep_indices.json')
         nms_keep_indices = io.load_json_object(nms_keep_indices_json)
 
-        select_dets = select_boxes(boxes,scores,nms_keep_indices,exp_const)
-        for box_type in ['human','object']:
-            boxes_npy = os.path.join(
-                select_boxes_dir,
-                f'{global_id}_{box_type}.npy')
-            np.save(boxes_npy,select_dets[box_type])
+        selected_dets = select_dets(boxes,scores,nms_keep_indices,exp_const)
+        selected_dets_npy = os.path.join(
+            select_boxes_dir,
+            f'{global_id}_selected_dets.npy')
+        np.save(selected_dets_npy,selected_dets)
