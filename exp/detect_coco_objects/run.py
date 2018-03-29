@@ -1,11 +1,9 @@
-import exp.detect_coco_objects.prepare_data_for_faster_rcnn as \
-    prepare_data_for_faster_rcnn
-import exp.detect_coco_objects.select_confident_boxes as \
-    select_confident_boxes
 import exp.detect_coco_objects.evaluate_boxes as evaluate_boxes
+import exp.detect_coco_objects.prepare_data_for_faster_rcnn as prepare_data_for_faster_rcnn
+import exp.detect_coco_objects.select_confident_boxes as select_confident_boxes
 from data.hico.hico_constants import HicoBoxesConstants
-from utils.constants import ExpConstants
 from exp.experimenter import *
+from utils.constants import ExpConstants
 
 
 def exp_detect_coco_objects_in_hico():
