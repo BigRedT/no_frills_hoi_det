@@ -17,7 +17,7 @@ parser.add_argument(
     type=str, 
     default=None,
     required=True,
-    help='Path to predicted hico detections directory')
+    help='Path to predicted hoi detections hdf5 file')
 parser.add_argument(
     '--out_dir', 
     type=str, 
