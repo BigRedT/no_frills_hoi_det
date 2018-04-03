@@ -11,6 +11,7 @@ def exp_detect_hoi():
     exp_const = ExpConstants(
         exp_name=exp_name,
         out_base_dir='/home/tanmay/Data/weakly_supervised_hoi_exp')
+    exp_const.subset = 'test'
 
     data_const = HicoConstants(
         clean_dir='/home/ssd/hico_det_clean_20160224',
