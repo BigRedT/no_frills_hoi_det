@@ -16,4 +16,14 @@ Each `global_id` is an hdf5 group with `boxes_scores_rpn_ids` and `start_end_ids
 ## HDF5 datasets description
 **`boxes_scores_rpn_ids`** is a Nx6 (=4+1+1) dimensional numpy array with each row containing the box coordinates (`x,y,w,h` where `x,y` is the box center), score for the selected class, and index of the box in the list of 300 boxes proposed by RPN in the Faster-RCNN framework. 
 
-**`start_end_ids`** is a 81x2 dimensional numpy array with i^th row containing the start and end row numbers in `box_scores_rpn_ids` for i^th class in the list of `COCO_CLASSES` (see `exp/detect_coco_objects/coco_classes.py)
+**`start_end_ids`** is a 81x2 dimensional numpy array with i^th row containing the start and end row numbers in `box_scores_rpn_ids` for i^th class in the list of `COCO_CLASSES` (see `exp/detect_coco_objects/coco_classes.py). So detections for i^th category in `COCO_CLASSES` for a given `global_id` are obtained by 
+
+```Python
+f = h5py.File(selected_coco_cls_dets_hdf5_path,'r')
+cls_name = COCO_CLASSES[i]
+start_id, end_id = f[global_id]['start_end_ids'][i]
+dets = f[global_id]['boxes_scores_rpn_ids'][start_id:end_id]
+boxes = dets[:,:4]
+scores = dets[:,4]
+rpn_ids = dets[:,5]
+```
