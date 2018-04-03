@@ -15,9 +15,10 @@ def exp_detect_hoi():
     data_const = HicoConstants(
         clean_dir='/home/ssd/hico_det_clean_20160224',
         proc_dir='/home/ssd/hico_det_processed_20160224')
-    data_const.selected_dets_dir = '/home/tanmay/Data/' + \
+    data_const.selected_dets_hdf5 = '/home/tanmay/Data/' + \
         'weakly_supervised_hoi_exp/select_confident_boxes_in_hico/' + \
-        'select_boxes_human_thresh_0.01_max_10_object_thresh_0.01_max_10'
+        'select_boxes_human_thresh_0.01_max_10_object_thresh_0.01_max_10/' + \
+        'selected_coco_cls_dets.hdf5'
     
     predict_hois.main(exp_const,data_const)
 
