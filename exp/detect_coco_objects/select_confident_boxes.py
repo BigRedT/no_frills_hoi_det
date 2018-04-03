@@ -1,4 +1,5 @@
 import os
+import h5py
 import numpy as np
 from tqdm import tqdm
 
@@ -46,12 +47,10 @@ def select_dets(
         scores,
         nms_keep_indices,
         exp_const):
-    selected_dets = {
-        'boxes': {},
-        'scores': {},
-        'rpn_ids': {}
-    }
+    selected_dets = []
     
+    start_end_ids = np.zeros([len(COCO_CLASSES),2],dtype=np.int32)
+    start_id = 0
     for cls_ind, cls_name in enumerate(COCO_CLASSES):
         cls_boxes = boxes[:, 4*cls_ind:4*(cls_ind + 1)]
         cls_scores = scores[:, cls_ind]
@@ -79,11 +78,17 @@ def select_dets(
                 exp_const.object_score_thresh,
                 exp_const.max_objects_per_class)
                 
-        selected_dets['boxes'][cls_name] = cls_boxes[select_ids]
-        selected_dets['scores'][cls_name] = cls_scores[select_ids]
-        selected_dets['rpn_ids'][cls_name] = select_ids
-    
-    return selected_dets
+        boxes_scores_rpn_id = np.concatenate((
+            cls_boxes[select_ids],
+            np.expand_dims(cls_scores[select_ids],1),
+            np.expand_dims(select_ids,1)),1)
+        selected_dets.append(boxes_scores_rpn_id)
+        num_boxes = boxes_scores_rpn_id.shape[0]
+        start_end_ids[cls_ind,:] = [start_id,start_id+num_boxes]
+        start_id += num_boxes
+
+    selected_dets = np.concatenate(selected_dets)
+    return selected_dets, start_end_ids
 
 
 def select(exp_const,data_const):
@@ -112,6 +117,10 @@ def select(exp_const,data_const):
     print('Loading anno_list.json ...')
     anno_list = io.load_json_object(data_const.anno_list_json)
 
+    print('Creating selected_coco_cls_dets.hdf5 file ...')
+    hdf5_file = os.path.join(select_boxes_dir,'selected_coco_cls_dets.hdf5')
+    f = h5py.File(hdf5_file,'w')
+
     print('Selecting boxes ...')
     for anno in tqdm(anno_list):
         global_id = anno['global_id']
@@ -131,8 +140,9 @@ def select(exp_const,data_const):
             f'{global_id}_nms_keep_indices.json')
         nms_keep_indices = io.load_json_object(nms_keep_indices_json)
 
-        selected_dets = select_dets(boxes,scores,nms_keep_indices,exp_const)
-        selected_dets_npy = os.path.join(
-            select_boxes_dir,
-            f'{global_id}_selected_dets.npy')
-        np.save(selected_dets_npy,selected_dets)
+        selected_dets, start_end_ids = select_dets(boxes,scores,nms_keep_indices,exp_const)
+        f.create_group(global_id)
+        f[global_id].create_dataset('boxes_scores_rpn_ids',data=selected_dets)
+        f[global_id].create_dataset('start_end_ids',data=start_end_ids)
+        
+    f.close()
