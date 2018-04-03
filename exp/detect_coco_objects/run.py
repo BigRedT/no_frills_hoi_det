@@ -43,8 +43,8 @@ def exp_select_and_evaluate_confident_boxes_in_hico():
             exp_const.object_score_thresh = object_score_thresh
             
             select_confident_boxes.select(exp_const,data_const)
-            evaluate_boxes.evaluate_boxes(exp_const,data_const)
-            evaluate_boxes.evaluate_boxes_and_labels(exp_const,data_const)
+            #evaluate_boxes.evaluate_boxes(exp_const,data_const)
+            #evaluate_boxes.evaluate_boxes_and_labels(exp_const,data_const)
 
 if __name__=='__main__':
     list_exps(globals())
