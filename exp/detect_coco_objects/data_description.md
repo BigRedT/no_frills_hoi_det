@@ -18,7 +18,7 @@ Each `global_id` is an hdf5 group with `boxes_scores_rpn_ids` and `start_end_ids
 
 **`start_end_ids`** is a 81x2 dimensional numpy array with i^th row containing the start and end row numbers in `box_scores_rpn_ids` for i^th class in the list of `COCO_CLASSES` (see `exp/detect_coco_objects/coco_classes.py). So detections for i^th category in `COCO_CLASSES` for a given `global_id` are obtained by 
 
-```Python
+```python
 f = h5py.File(selected_coco_cls_dets_hdf5_path,'r')
 cls_name = COCO_CLASSES[i]
 start_id, end_id = f[global_id]['start_end_ids'][i]

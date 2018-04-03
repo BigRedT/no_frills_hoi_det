@@ -18,7 +18,7 @@ This is the format in which the hoi detections from any model need to be saved i
 
 **`start_end_ids`** is a 600x2 dimensional numpy array with i^th row containing the start and end row numbers in `box_scores_rpn_ids` for i^th class in the [list of hico classes](http://napoli18.eecs.umich.edu/public_html/data/hico_list_hoi.txt). Since the hoi class ids begin with '001', for an hoi class with id '006', the set of detections for a given `global_id` are obtained by 
 
-```Python
+```python
 f = h5py.File(pred_dets_hdf5_path,'r')
 hoi_id = '006'
 start_id, end_id = f[global_id]['start_end_ids'][int(hoi_id)-1]
