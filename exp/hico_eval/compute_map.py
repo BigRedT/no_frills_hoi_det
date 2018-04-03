@@ -13,7 +13,7 @@ from utils.bbox_utils import compute_iou
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    '--hico_dets_dir', 
+    '--pred_hoi_dets_hdf5', 
     type=str, 
     default=None,
     required=True,
@@ -100,7 +100,10 @@ def eval_hoi(hoi_id,global_ids,gt_dets,pred_dets_hdf5,out_dir):
             candidate_gt_dets = []
         npos += len(candidate_gt_dets)
 
-        hoi_dets = pred_dets[global_id][hoi_id].value
+        start_id, end_id = pred_dets[global_id]['start_end_ids'][int(hoi_id)-1]
+        hoi_dets = \
+            pred_dets[global_id]['human_obj_boxes_scores'][start_id:end_id]
+
         for i in range(hoi_dets.shape[0]):     
             pred_det = {
                 'human_box': hoi_dets[i,:4],
@@ -111,11 +114,9 @@ def eval_hoi(hoi_id,global_ids,gt_dets,pred_dets_hdf5,out_dir):
             y_score.append(pred_det['score'])
 
     # Compute PR
-    # precision,recall,_ = precision_recall_curve(y_true,y_score)
     precision,recall = compute_pr(y_true,y_score,npos)
 
     # Compute AP
-    # ap = average_precision_score(y_true,y_score)
     ap = compute_ap(precision,recall)
     print(f'AP:{ap}')
 
@@ -176,36 +177,11 @@ def load_gt_dets(proc_dir,global_ids_set):
     return gt_dets
 
 
-def read_pred_dets_npy(global_id,pred_dets_dir):
-    print(f'Loading {global_id} ...')
-    pred_dets_npy = os.path.join(
-        pred_dets_dir,
-        f'{global_id}_pred_hoi_dets.npy')
-    return global_id, np.load(pred_dets_npy)[()]
-
-
-def load_pred_dets(global_ids,pred_dets_dir,num_processes):
-    starmap_inputs = []
-    for global_id in global_ids:
-        starmap_inputs.append((global_id,pred_dets_dir))
-
-    p = Pool(num_processes)
-    output = p.starmap(read_pred_dets_npy,starmap_inputs)
-    p.close()
-    p.join()
-    
-    pred_dets = {}
-    for global_id, dets in output:
-        pred_dets[global_id] = dets
-    
-    return pred_dets
-
-
 def main():
     args = parser.parse_args()
 
     print('Creating output dir ...')
-    io.mkdir_if_not_exists(args.out_dir)
+    io.mkdir_if_not_exists(args.out_dir,recursive=True)
 
     # Load hoi_list
     hoi_list_json = os.path.join(args.proc_dir,'hoi_list.json')
@@ -221,36 +197,17 @@ def main():
     print('Creating GT dets ...')
     gt_dets = load_gt_dets(args.proc_dir,global_ids_set)
 
-    # Load predictions
-    print('Loading predicted dets ...')
-    pred_dets_hdf5 = os.path.join(args.hico_dets_dir,'pred_hoi_dets.hdf5')
-    #pred_dets = h5py.File(pred_dets_hdf5,'r')
-    # if os.path.exists(pred_dets_npy):
-    #     print(f'    Reading from {pred_dets_npy}...')
-    #     pred_dets = np.load(pred_dets_npy)[()]
-    # else:
-    #     print(f'    File not found {pred_dets_npy}; creating one')
-    #     pred_dets = load_pred_dets(
-    #         global_ids,
-    #         args.hico_dets_dir,
-    #         args.num_processes)
-        
-    #     print('Saving all pred dets in a single file ...')
-    #     pred_dets_npy = os.path.join(args.hico_dets_dir,'pred_hoi_dets.npy')
-    #     np.save(pred_dets_npy,pred_dets)
-
     eval_inputs = []
     for hoi in hoi_list:
         eval_inputs.append(
-            (hoi['id'],global_ids,gt_dets,pred_dets_hdf5,args.out_dir))
-
+            (hoi['id'],global_ids,gt_dets,args.pred_hoi_dets_hdf5,args.out_dir))
 
     print(f'Starting a pool of {args.num_processes} workers ...')
     p = Pool(args.num_processes)
 
     print(f'Begin mAP computation ...')
     output = p.starmap(eval_hoi,eval_inputs)
-    #output = eval_hoi('003',global_ids,gt_dets,pred_dets,args.out_dir)
+    #output = eval_hoi('003',global_ids,gt_dets,args.pred_hoi_dets_hdf5,args.out_dir)
 
     p.close()
     p.join()
@@ -275,7 +232,7 @@ def main():
         args.out_dir,
         'mAP.json') 
     io.dump_json_object(mAP,mAP_json)
-    import pdb; pdb.set_trace()
+
 
 if __name__=='__main__':
     main()
