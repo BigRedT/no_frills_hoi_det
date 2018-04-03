@@ -1,3 +1,9 @@
+"""
+Depricated: This file does not support selected boxes stored in hdf5 format. To use
+these functions please replace the code where selected_dets_npy is loaded with
+code to read the same information from hdf5 file. Format in which the data is 
+stored in the hdf5 is described in exp/detect_coco_objects/data_description.md
+"""
 import os
 import numpy as np
 from tqdm import tqdm
