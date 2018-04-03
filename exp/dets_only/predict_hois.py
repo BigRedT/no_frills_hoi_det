@@ -69,13 +69,14 @@ def main(exp_const,data_const):
     hoi_predictor = HoiPredictor(data_const)    
 
     print('Creating a pred_hoi_dets.hdf5 dataset ...')
-    pred_dets_hdf5 = os.path.join(pred_hoi_dets_dir,'pred_hoi_dets.hdf5')
+    pred_dets_hdf5 = os.path.join(
+        pred_hoi_dets_dir,f'pred_hoi_dets_{exp_const.subset}.hdf5')
     f = h5py.File(pred_dets_hdf5,'w')
 
     print('Reading selected dets from hdf5 file ...')
     all_selected_dets = h5py.File(data_const.selected_dets_hdf5,'r')
 
-    for global_id in tqdm(split_ids['test']):
+    for global_id in tqdm(split_ids[exp_const.subset]):
         selected_dets = {
             'boxes': {},
             'scores': {}
