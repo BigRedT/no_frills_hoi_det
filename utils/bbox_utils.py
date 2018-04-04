@@ -78,7 +78,7 @@ def vis_bboxes(bboxes,img,color=(0,0,0),modify=False):
     return img_
 
 
-def join_bboxes_by_line(bbox1,bbox2,img,color=(0,0,255),modify=False):
+def join_bboxes_by_line(bbox1,bbox2,img,color=(255,0,0),modify=False):
     x1,y1,x2,y2 = bbox1
     x1_,y1_,x2_,y2_ = bbox2
 
