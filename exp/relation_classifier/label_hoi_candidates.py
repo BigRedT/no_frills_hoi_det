@@ -1,6 +1,11 @@
+import os
 import h5py
+from tqdm import tqdm
+
 import utils.io as io
+import numpy as np
 from utils.constants import save_constants
+from utils.bbox_utils import compute_iou
 
 
 def load_gt_dets(anno_list_json,global_ids):
@@ -45,7 +50,7 @@ def match_hoi(pred_det,gt_dets):
     return is_match
 
 
-def main(exp_const,data_const):
+def assign(exp_const,data_const):
     io.mkdir_if_not_exists(exp_const.exp_dir)
 
     print('Saving constants ...')
@@ -57,11 +62,11 @@ def main(exp_const,data_const):
     print(f'Creating hoi_candidate_labels_{exp_const.subset}.hdf5 ...')
     filename = os.path.join(
         exp_const.exp_dir,
-        f'hoi_candidates_{exp_const.subset}.hdf5')
+        f'hoi_candidate_labels_{exp_const.subset}.hdf5')
     hoi_cand_label_hdf5 = h5py.File(filename,'w')
 
     print('Loading gt hoi detections ...')
-    split_ids = os.path.join(data_const.split_ids_json)
+    split_ids = io.load_json_object(data_const.split_ids_json)
     global_ids = split_ids[exp_const.subset]
     gt_dets = load_gt_dets(data_const.anno_list_json,global_ids)
 
@@ -69,16 +74,23 @@ def main(exp_const,data_const):
     hoi_list = io.load_json_object(data_const.hoi_list_json)
     hoi_ids = [hoi['id'] for hoi in hoi_list]
 
-    for global_id in global_ids:
+    for global_id in tqdm(global_ids):
         boxes_scores_rpn_ids = hoi_cand_hdf5[global_id]['boxes_scores_rpn_ids']
         start_end_ids = hoi_cand_hdf5[global_id]['start_end_ids']
-        row_to_roi_id = {}
-        for hoi_id in hoi_ids:
+        num_cand = boxes_scores_rpn_ids.shape[0]
+        labels = np.zeros([num_cand])
+        for hoi_id in gt_dets[global_id]:
             start_id,end_id = start_end_ids[int(hoi_id)-1]
             for i in range(start_id,end_id):
-                row_to_roi_id[i] = hoi_id
+                cand_det = {
+                    'human_box': boxes_scores_rpn_ids[i,:4],
+                    'object_box': boxes_scores_rpn_ids[i,4:8]
+                }
+                is_match = match_hoi(cand_det,gt_dets[global_id][hoi_id])
+                if is_match:
+                    labels[i] = 1.0
 
-        cand_det = {
-            'human_box': boxes_scores_rpn_ids[]
-        }
+        hoi_cand_label_hdf5.create_dataset(global_id,data=labels)
+
+    hoi_cand_label_hdf5.close()
 

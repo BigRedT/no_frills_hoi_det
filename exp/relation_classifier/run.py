@@ -1,3 +1,5 @@
+import os
+
 from exp.experimenter import *
 from data.hico.hico_constants import HicoConstants
 from utils.constants import ExpConstants
@@ -16,7 +18,7 @@ parser.add_argument(
     help='Apply this flag to label hoi candidates')
 
 
-def exp_gen_and_label_hoi_candidates():
+def exp_gen_and_label_hoi_cand():
     args = parser.parse_args()
     exp_name = 'hoi_candidates'
     exp_const = ExpConstants(
