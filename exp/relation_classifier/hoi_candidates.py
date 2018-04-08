@@ -66,21 +66,15 @@ def generate(exp_const,data_const):
 
     save_constants({'exp': exp_const,'data': data_const},exp_const.exp_dir)
 
-    print(f'Creating pred_hoi_dets dir ...')
-    hoi_cand_dets_dir = os.path.join(
-        exp_const.exp_dir,
-        'hoi_candidate_dets')
-    io.mkdir_if_not_exists(hoi_cand_dets_dir)
-
     print(f'Reading split_ids.json ...')
     split_ids = io.load_json_object(data_const.split_ids_json)
 
     print('Creating an object-detector-only HOI detector ...')
     hoi_cand_gen = HoiCandidatesGenerator(data_const)    
 
-    print('Creating a pred_hoi_dets.hdf5 dataset ...')
+    print(f'Creating a hoi_candidates_{exp_const.subset}.hdf5 file ...')
     hoi_cand_hdf5 = os.path.join(
-        hoi_cand_dets_dir,f'hoi_candidates_{exp_const.subset}.hdf5')
+        exp_const.exp_dir,f'hoi_candidates_{exp_const.subset}.hdf5')
     f = h5py.File(hoi_cand_hdf5,'w')
 
     print('Reading selected dets from hdf5 file ...')
