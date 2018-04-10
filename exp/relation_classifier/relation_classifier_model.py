@@ -4,7 +4,7 @@ import torch.nn as nn
 from torch.autograd import Variable
 
 import utils.io as io
-from utils.pytorch_layers import pytorch_layers
+import utils.pytorch_layers as pytorch_layers
 
 
 class RelationClassifierConstants(io.JsonSerializableClass):
