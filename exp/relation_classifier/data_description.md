@@ -6,16 +6,16 @@ Similar to `pred_hoi_dets.hdf5` but with scores for human and object separated a
 ```
 .
 +-- global_id1
-|   +-- human_obj_boxes_scores
+|   +-- boxes_scores_rpn_ids
 |   +-- start_end_ids
 +-- global_id2
-|   +-- human_obj_boxes_scores
+|   +-- boxes_scores_rpn_ids
 |   +-- start_end_ids
 ...
 ```
 
 ## HDF5 datasets description
-**`human_obj_boxes_scores`** is a Nx12 matrix with each row containing the following in formation in order
+**`boxes_scores_rpn_ids`** is a Nx12 matrix with each row containing the following in formation in order
 - human box coordinates (x,y,w,h)   [4]
 - object box coordinates (x,y,w,h)  [4]
 - human score   [1]
