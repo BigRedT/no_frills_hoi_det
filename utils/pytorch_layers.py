@@ -28,8 +28,8 @@ def get_activation(name):
 
 
 def create_mlp(const):
-    out_activation = pytorch_layers.get_activation(const['out_activation'])
-    activation = pytorch_layers.get_activation(const['activation'])
+    out_activation = get_activation(const['out_activation'])
+    activation = get_activation(const['activation'])
     mlp = MLP(
         in_dim=const['in_dim'],
         out_dim=const['out_dim'],
