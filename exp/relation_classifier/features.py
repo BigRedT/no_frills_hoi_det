@@ -42,7 +42,7 @@ class Features(Dataset):
 
     def get_obj_to_hoi_ids(self,hoi_dict):
         obj_to_hoi_ids = {}
-        for hoi_id, hoi in hoi_dict.items()
+        for hoi_id, hoi in hoi_dict.items():
             obj = hoi['object']
             if obj in obj_to_hoi_ids:
                 obj_to_hoi_ids[obj].append(hoi_id)
