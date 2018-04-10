@@ -78,17 +78,17 @@ def assign(exp_const,data_const):
         boxes_scores_rpn_ids = hoi_cand_hdf5[global_id]['boxes_scores_rpn_ids']
         start_end_ids = hoi_cand_hdf5[global_id]['start_end_ids']
         num_cand = boxes_scores_rpn_ids.shape[0]
-        labels = np.zeros([num_cand])
+        labels = -1*np.ones([num_cand]) # -1 is considered none of the hoi labels
         for hoi_id in gt_dets[global_id]:
             start_id,end_id = start_end_ids[int(hoi_id)-1]
             for i in range(start_id,end_id):
                 cand_det = {
                     'human_box': boxes_scores_rpn_ids[i,:4],
-                    'object_box': boxes_scores_rpn_ids[i,4:8]
+                    'object_box': boxes_scores_rpn_ids[i,4:8],
                 }
                 is_match = match_hoi(cand_det,gt_dets[global_id][hoi_id])
                 if is_match:
-                    labels[i] = 1.0
+                    labels[i] = int(hoi_id)-1
 
         hoi_cand_label_hdf5.create_dataset(global_id,data=labels)
 
