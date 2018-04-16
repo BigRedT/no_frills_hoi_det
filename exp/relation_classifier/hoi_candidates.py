@@ -26,9 +26,9 @@ class HoiCandidatesGenerator():
         for hoi_id, hoi_info in self.hoi_classes.items():
             dets = self.predict_hoi(selected_dets,hoi_info)
             pred_hoi_dets.append(dets)
-            start_end_ids[int(hoi_id)-1,:] = [start_id,start_id+dets.shape[0]]
+            hoi_idx = int(hoi_id)-1
+            start_end_ids[hoi_idx,:] = [start_id,start_id+dets.shape[0]]
             start_id += dets.shape[0]
-
         pred_hoi_dets = np.concatenate(pred_hoi_dets)
         return pred_hoi_dets, start_end_ids
 
@@ -40,23 +40,18 @@ class HoiCandidatesGenerator():
         object_boxes = selected_dets['boxes'][hoi_object]
         object_scores = selected_dets['scores'][hoi_object]
         object_rpn_ids = selected_dets['rpn_ids'][hoi_object]
-        hoi_dets = []
+        num_hoi_dets = human_boxes.shape[0]*object_boxes.shape[0]
+        hoi_dets = np.zeros([num_hoi_dets,13])
+        hoi_idx = int(hoi_info['id'])-1
+        hoi_dets[:,-1] = hoi_idx
+        count = 0
         for i in range(human_boxes.shape[0]):
             for j in range(object_boxes.shape[0]):
-                hoi_det = np.concatenate(   # shape (12,)
-                    (
-                        human_boxes[i], # 4
-                        object_boxes[j],    # 4
-                        [human_scores[i]],  # 1
-                        [object_scores[j]], # 1
-                        [human_rpn_ids[i]], # 1
-                        [object_rpn_ids[j]] # 1
-                    )
-                )
-                hoi_dets.append(hoi_det)
-
-        hoi_dets = np.stack(hoi_dets,0)
-
+                hoi_dets[count,:4] = human_boxes[i]
+                hoi_dets[count,4:8] = object_boxes[j]
+                hoi_dets[count,8:12] = [human_scores[i],object_scores[j], \
+                    human_rpn_ids[i],object_rpn_ids[j]]
+                count += 1
         return hoi_dets
 
 
@@ -101,7 +96,8 @@ def generate(exp_const,data_const):
 
         pred_dets, start_end_ids = hoi_cand_gen.predict(selected_dets)
         f.create_group(global_id)
-        f[global_id].create_dataset('boxes_scores_rpn_ids',data=pred_dets)
+        f[global_id].create_dataset(
+            'boxes_scores_rpn_ids_hoi_idx',data=pred_dets)
         f[global_id].create_dataset('start_end_ids',data=start_end_ids)
 
     f.close()
