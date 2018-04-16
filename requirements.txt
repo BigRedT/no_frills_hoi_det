@@ -3,3 +3,8 @@ tqdm
 scikit-image
 scikit-learn
 h5py
+
+# Logging
+tensorboard-logger
+# Tensorflow (cpu works) required for viewing the log files only
+tensorflow  
