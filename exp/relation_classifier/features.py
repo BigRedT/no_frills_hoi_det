@@ -27,10 +27,12 @@ class Features(Dataset):
         self.faster_rcnn_feats = self.load_hdf5_file(
             self.const.faster_rcnn_feats_hdf5)
         self.global_ids = self.load_subset_ids(self.const.subset)
+        print('Creating sample index ...')
         self.sample_ids, self.global_id_to_num_cands = \
             self.create_list_of_sample_ids(self.global_ids)
         self.hoi_dict = self.get_hoi_dict(self.const.hoi_list_json)
         self.obj_to_hoi_ids = self.get_obj_to_hoi_ids(self.hoi_dict)
+        print('Dataset ready for iteration')
 
     def load_hdf5_file(self,hdf5_filename,mode='r'):
         return h5py.File(hdf5_filename,mode)
@@ -67,28 +69,31 @@ class Features(Dataset):
         return len(self.sample_ids)
 
     def get_label(self,global_id,cand_id):
-        hoi_label_idx = int(self.hoi_cand_labels[global_id][cand_id])
-        hoi_label_vec = np.zeros([len(self.idx_to_hoi_id)])
-        if hoi_label_idx==-1:
-            hoi_id = 'background'
-        else:
-            hoi_id = str(hoi_label_idx+1).zfill(3)
-            hoi_label_vec[hoi_label_idx] = 1.0
-        return hoi_id, hoi_label_vec
+        # hoi_idx: number in [0,599]
+        hoi_idx = \
+            int(self.hoi_cands[global_id]['boxes_scores_rpn_ids_hoi_idx'][cand_id,-1])
+        # label: 0/1 indicating if there was a match with any gt for that hoi
+        label = self.hoi_cand_labels[global_id][cand_id]
+        hoi_label_vec = np.zeros([len(self.hoi_dict)])
+        hoi_label_vec[hoi_idx] = label
+        hoi_id = str(hoi_idx+1).zfill(3)
+        return hoi_id, label, hoi_label_vec
 
     def get_faster_rcnn_prob_vecs(self,hoi_id,human_prob,object_prob):
         num_hois = len(self.hoi_dict)
         human_prob_vec = human_prob*np.ones([num_hois])
         object_prob_vec = np.zeros([num_hois])
-        obj = self.hoi_dict[hoi_id]
-        for other_hoi_id in self.hoi_dict[hoi_id]:
+        obj = self.hoi_dict[hoi_id]['object']
+        other_hoi_ids = self.obj_to_hoi_ids[obj]
+        for other_hoi_id in other_hoi_ids:
             object_prob_vec[int(other_hoi_id)-1] = object_prob
         return human_prob_vec, object_prob_vec
 
     def __getitem__(self,i):
         global_id, cand_id = self.sample_ids[i]
-        hoi_cand = self.hoi_cands[global_id]['boxes_scores_rpn_ids'][cand_id]
-        hoi_id, hoi_label_vec = self.get_label(global_id,cand_id)
+        hoi_cand = \
+            self.hoi_cands[global_id]['boxes_scores_rpn_ids_hoi_idx'][cand_id]
+        hoi_id, hoi_label, hoi_label_vec = self.get_label(global_id,cand_id)
         to_return = {
             'global_id': global_id,
             'human_box': hoi_cand[:4],
@@ -98,6 +103,7 @@ class Features(Dataset):
             'human_rpn_id': hoi_cand[10],
             'object_rpn_id': hoi_cand[11],
             'hoi_id': hoi_id,
+            'hoi_label': hoi_label,
             'hoi_label_vec': hoi_label_vec,
         }
         to_return['human_feat'] = \
