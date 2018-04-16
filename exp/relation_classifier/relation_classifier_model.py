@@ -50,12 +50,12 @@ class RelationClassifier(nn.Module,io.WritableToFile):
             self.const.faster_rcnn_object_feature_factor_const)
         self.sigmoid = pytorch_layers.get_activation('Sigmoid')
         
-    def forward(self,input):
-        B = input['human_feat'].size[0]
+    def forward(self,feats):
+        B = feats['human_rcnn'].size(0)
         faster_rcnn_feature_factor_scores = \
-            self.faster_rcnn_human_feature_factor(input['human_feat']) + \
-            self.faster_rcnn_object_feature_factor(input['object_feat'])
-        relation_prob = nn.Sigmoid(faster_rcnn_feature_factor_score)
+            self.faster_rcnn_human_feature_factor(feats['human_rcnn']) + \
+            self.faster_rcnn_object_feature_factor(feats['object_rcnn'])
+        relation_prob = self.sigmoid(faster_rcnn_feature_factor_scores)
         return relation_prob
 
     
