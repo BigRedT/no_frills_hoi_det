@@ -35,8 +35,8 @@ class GatherRelation(nn.Module,io.WritableToFile):
     def forward(self,relation_prob):
         batch_size, num_relations = relation_prob.size()
         num_hois = len(self.hoi_dict)
-        output = Variable(torch.zeros(batch_size,num_hois))
-        for hoi_id, hoi in self.hoi_dict:
+        output = Variable(torch.zeros(batch_size,num_hois)).cuda()
+        for hoi_id, hoi in self.hoi_dict.items():
             relation = hoi['verb']
             relation_idx = int(self.relation_to_idx[relation])-1
             hoi_idx = int(hoi_id)-1
