@@ -1,33 +1,31 @@
 from tqdm import tqdm
+from torch.utils.data import DataLoader
+from torch.utils.data.sampler import RandomSampler
 
 from tests.tester import *
-from exp.relation_classifier.features import Features, FeatureConstants
+from exp.relation_classifier.features_balanced import \
+    FeaturesBalanced, FeatureBalancedConstants
 
 
 def test_features():
-    const = FeatureConstants()
+    const = FeatureBalancedConstants()
     const.hoi_cands_hdf5 = \
         '/home/tanmay/Data/weakly_supervised_hoi_exp/hoi_candidates/' + \
-        'hoi_candidates_test.hdf5'
+        'hoi_candidates_train_val.hdf5'
     const.hoi_cand_labels_hdf5 = \
         '/home/tanmay/Data/weakly_supervised_hoi_exp/hoi_candidates/' + \
-        'hoi_candidate_labels_test.hdf5'
+        'hoi_candidate_labels_train_val.hdf5'
     const.faster_rcnn_feats_hdf5 = \
         '/home/ssd/hico_det_processed_20160224/faster_rcnn_fc7.hdf5'
-    const.subset = 'test'
+    const.subset = 'train_val'
+    const.balanced_sampling = True
 
-    dataset = Features(const)
-    #import pdb; pdb.set_trace()
-    print(len(dataset))
-    for i in tqdm(range(40000)):
-        data = dataset[i]
-        if data['hoi_id']=='background':
-            continue
-
-        print(data['hoi_id'])
-        print(dataset.global_id_to_num_cands[data['global_id']])
-
-    import pdb; pdb.set_trace()
+    dataset = FeaturesBalanced(const)
+    # data_loader = DataLoader(dataset,batch_size=1,shuffle=True)
+    sampler = RandomSampler(dataset)
+    for i, sample_id in enumerate(sampler):
+        data = dataset[sample_id]
+        import pdb; pdb.set_trace()
 
     
 
