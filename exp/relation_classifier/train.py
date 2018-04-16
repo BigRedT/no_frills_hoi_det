@@ -1,9 +1,14 @@
 import os
+import itertools
 import numpy as np
 import torch
 import torch.nn as nn
+from tqdm import tqdm
+tqdm.monitor_interval = 0
+import torch.optim as optim
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
+from tensorboard_logger import configure, log_value
 
 import utils.io as io
 from utils.model import Model
@@ -14,17 +19,123 @@ from exp.relation_classifier.features import Features
 
 
 def train_model(model,data_loader_train,data_loader_val,exp_const):
-    
+    params = itertools.chain(
+        model.relation_classifier.parameters(),
+        model.gather_relation.parameters())
+    optimizer = optim.Adam(params,lr=exp_const.lr)
+    criterion = nn.BCELoss()
+    step = 0
+    for epoch in range(exp_const.num_epochs):
+        for i, data in enumerate(data_loader_train):
+            feats = {
+                'human_rcnn': Variable(data['human_feat'].float().cuda()),
+                'object_rcnn': Variable(data['object_feat'].float().cuda())
+            }
+            human_prob_vec = Variable(data['human_prob_vec'].float().cuda())
+            object_prob_vec = Variable(data['object_prob_vec'].float().cuda())
+            hoi_labels = Variable(data['hoi_label_vec'].float().cuda())
+
+            model.relation_classifier.train()
+            model.gather_relation.train()
+            relation_prob = model.relation_classifier(feats)
+            relation_prob_vec = model.gather_relation(relation_prob)
+
+            hoi_prob = human_prob_vec * object_prob_vec * relation_prob_vec
+
+            loss = criterion(hoi_prob,hoi_labels)
+
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+            log_value('train_loss',loss.data[0],step)
+            log_value('max_prob',hoi_prob.max().data[0],step)
+            
+            if step%10==0:
+                log_str = \
+                    'Epoch: {} | Iter: {} | Step: {} | ' + \
+                    'Train Loss: {:.8f}'
+                log_str = log_str.format(
+                    epoch,
+                    i,
+                    step,
+                    loss.data[0])
+                print(log_str)
+
+            if step%100==0:
+                val_loss = eval_model(model,data_loader_val,exp_const)
+                log_value('val_loss',val_loss,step)
+                log_str = \
+                    'Epoch: {} | Iter: {} | Step: {} | ' + \
+                    'Train Loss: {:.8f} | Val Loss: {:.8f}'
+                log_str = log_str.format(
+                    epoch,
+                    i,
+                    step,
+                    loss.data[0],
+                    val_loss)
+                print(log_str)
+
+            if step%500==0:
+                relation_classifier_pth = os.path.join(
+                    exp_const.model_dir,
+                    f'relation_classifier_{step}')
+                torch.save(
+                    model.relation_classifier.state_dict(),
+                    relation_classifier_pth)
+
+            step += 1
+
+
+def eval_model(model,data_loader_val,exp_const):
+    model.relation_classifier.eval()
+    model.gather_relation.eval()
+    criterion = nn.BCELoss()
+    step = 0
+    val_loss = 0
+    count = 0
+    for data in tqdm(data_loader_val):
+        if step==100:
+            break
+
+        feats = {
+            'human_rcnn': Variable(data['human_feat'].float().cuda()),
+            'object_rcnn': Variable(data['object_feat'].float().cuda())
+        }
+        human_prob_vec = Variable(data['human_prob_vec'].float().cuda())
+        object_prob_vec = Variable(data['object_prob_vec'].float().cuda())
+        hoi_labels = Variable(data['hoi_label_vec'].float().cuda())
+
+        model.relation_classifier.train()
+        model.gather_relation.train()
+        relation_prob = model.relation_classifier(feats)
+        relation_prob_vec = model.gather_relation(relation_prob)
+
+        hoi_prob = human_prob_vec * object_prob_vec * relation_prob_vec
+
+        loss = criterion(hoi_prob,hoi_labels)
+
+        batch_size = human_prob_vec.size(0)
+        val_loss += (batch_size*loss.data[0])
+        count += batch_size
+        step += 1
+
+    val_loss = val_loss / float(count)
+    return val_loss
+
 
 def main(exp_const,data_const,model_const):
     io.mkdir_if_not_exists(exp_const.exp_dir,recursive=True)
+    io.mkdir_if_not_exists(exp_const.log_dir)
+    io.mkdir_if_not_exists(exp_const.model_dir)
+    configure(exp_const.log_dir)
     save_constants({'exp':exp_const,'data':data_const},exp_const.exp_dir)
 
     print('Creating model ...')
     model = Model()
     model.relation_classifier = \
-        RelationClassifier(model_const.relation_classifier)
-    model.gather_relation = GatherRelation(model_const.gather_relation)
+        RelationClassifier(model_const.relation_classifier).cuda()
+    model.gather_relation = GatherRelation(model_const.gather_relation).cuda()
     model.to_txt(exp_const.exp_dir,single_file=True)
 
     print('Creating data loaders ...')
@@ -41,8 +152,9 @@ def main(exp_const,data_const,model_const):
     data_loader_val = DataLoader(
         dataset_val,
         batch_size=exp_const.batch_size,
-        shuffle=True,
+        shuffle=False,
         drop_last=False)
+    #data_loader_val = None
 
     train_model(model,data_loader_train,data_loader_val,exp_const)
 
