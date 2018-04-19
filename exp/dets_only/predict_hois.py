@@ -6,7 +6,7 @@ import h5py
 
 import utils.io as io
 from utils.constants import save_constants
-from exp.detect_coco_objects.coco_classes import COCO_CLASSES
+from data.coco_classes import COCO_CLASSES
 
 
 class HoiPredictor():
