@@ -159,7 +159,7 @@ def exp_train_balanced():
 
 
 def exp_eval():
-    exp_name = 'factors_rcnn_feats_scores_balanced_imgs_per_batch_1'
+    exp_name = 'factors_rcnn_feats_scores_imgs_per_batch_1_focal_loss_False_fp_to_tp_ration_1000'
     out_base_dir = \
         '/home/tanmay/Data/weakly_supervised_hoi_exp' + \
         '/relation_classifier'
@@ -184,14 +184,14 @@ def exp_eval():
     data_const.subset = 'test' # to be set in the train.py script
     
     model_const = Constants()
+    model_const.model_num = 100000
     model_const.relation_classifier = RelationClassifierConstants()
     model_const.gather_relation = GatherRelationConstants()
     model_const.gather_relation.hoi_list_json = data_const.hoi_list_json
     model_const.gather_relation.verb_list_json = data_const.verb_list_json
-    model_const.relation_classifier.model_num = 145000
     model_const.relation_classifier.model_pth = os.path.join(
         exp_const.model_dir,
-        f'relation_classifier_{model_const.relation_classifier.model_num}')
+        f'relation_classifier_{model_const.model_num}')
     evaluate.main(exp_const,data_const,model_const)
 
 
