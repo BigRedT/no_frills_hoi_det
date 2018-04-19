@@ -23,7 +23,7 @@ def eval_model(model,dataset,exp_const):
     print('Creating hdf5 file for predicted hoi dets ...')
     pred_hoi_dets_hdf5 = os.path.join(
         exp_const.exp_dir,
-        f'pred_hoi_dets_{dataset.const.subset}.hdf5')
+        f'pred_hoi_dets_{dataset.const.subset}_{model.model_num}.hdf5')
     pred_hois = h5py.File(pred_hoi_dets_hdf5,'w')
     model.relation_classifier.eval()
     model.gather_relation.eval()
@@ -65,6 +65,7 @@ def eval_model(model,dataset,exp_const):
 def main(exp_const,data_const,model_const):
     print('Loading model ...')
     model = Model()
+    model.model_num = model_const.model_num
     model.relation_classifier = \
         RelationClassifier(model_const.relation_classifier).cuda()
     model.gather_relation = GatherRelation(model_const.gather_relation).cuda()
