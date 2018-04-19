@@ -121,18 +121,18 @@ def eval_hoi(hoi_id,global_ids,gt_dets,pred_dets_hdf5,out_dir):
     print(f'AP:{ap}')
 
     # Plot PR curve
-    plt.figure()
-    plt.step(recall,precision,color='b',alpha=0.2,where='post')
-    plt.fill_between(recall,precision,step='post',alpha=0.2,color='b')
-    plt.xlabel('Recall')
-    plt.ylabel('Precision')
-    plt.ylim([0.0, 1.05])
-    plt.xlim([0.0, 1.0])
-    plt.title('Precision-Recall curve: AP={0:0.4f}'.format(ap))
-    plt.savefig(
-        os.path.join(out_dir,f'{hoi_id}_pr.png'),
-        bbox_inches='tight')
-    plt.close()
+    # plt.figure()
+    # plt.step(recall,precision,color='b',alpha=0.2,where='post')
+    # plt.fill_between(recall,precision,step='post',alpha=0.2,color='b')
+    # plt.xlabel('Recall')
+    # plt.ylabel('Precision')
+    # plt.ylim([0.0, 1.05])
+    # plt.xlim([0.0, 1.0])
+    # plt.title('Precision-Recall curve: AP={0:0.4f}'.format(ap))
+    # plt.savefig(
+    #     os.path.join(out_dir,f'{hoi_id}_pr.png'),
+    #     bbox_inches='tight')
+    # plt.close()
 
     # Save AP data
     ap_data = {
