@@ -5,7 +5,7 @@ from tqdm import tqdm
 
 import utils.io as io
 from utils.bbox_utils import compute_area
-from exp.detect_coco_objects.coco_classes import COCO_CLASSES
+from data.coco_classes import COCO_CLASSES
 
 
 def select_det_ids(boxes,scores,nms_keep_ids,score_thresh,max_dets):
