@@ -72,7 +72,7 @@ def exp_gen_and_label_hoi_cand():
 
     data_const = HicoConstants()
     selected_dets_hdf5_relative_path = 'data_symlinks/' + \
-        'weakly_supervised_hoi_exp/select_confident_boxes_in_hico/' + \
+        'hico_exp/select_confident_boxes_in_hico/' + \
         'select_boxes_human_thresh_0.01_max_10_object_thresh_0.01_max_10/' + \
         'selected_coco_cls_dets.hdf5'
     data_const.selected_dets_hdf5 = os.path.join(
@@ -115,7 +115,7 @@ def exp_train():
     exp_name = 'factors_rcnn_feats_scores'
     out_base_dir = os.path.join(
         os.getcwd(),
-        'data_symlinks/weakly_supervised_hoi_exp/relation_classifier')
+        'data_symlinks/hico_exp/relation_classifier')
     exp_const = ExpConstants(
         exp_name=exp_name,
         out_base_dir=out_base_dir)
@@ -128,7 +128,7 @@ def exp_train():
     data_const = FeatureConstants()
     hoi_cand_dir = os.path.join(
         os.getcwd(),
-        'data_symlinks/weakly_supervised_hoi_exp/hoi_candidates')
+        'data_symlinks/hico_exp/hoi_candidates')
     data_const.hoi_cands_hdf5 = os.path.join(
         hoi_cand_dir,
         'hoi_candidates_train_val.hdf5')
@@ -164,7 +164,7 @@ def exp_train_balanced():
         f'box_aware_model_{args.box_aware_model}'
     out_base_dir = os.path.join(
         os.getcwd(),
-        'data_symlinks/weakly_supervised_hoi_exp/relation_classifier')
+        'data_symlinks/hico_exp/relation_classifier')
     exp_const = ExpConstants(
         exp_name=exp_name,
         out_base_dir=out_base_dir)
@@ -178,7 +178,7 @@ def exp_train_balanced():
     data_const = FeatureBalancedConstants()
     hoi_cand_dir = os.path.join(
         os.getcwd(),
-        'data_symlinks/weakly_supervised_hoi_exp/hoi_candidates')
+        'data_symlinks/hico_exp/hoi_candidates')
     data_const.hoi_cands_hdf5 = os.path.join(
         hoi_cand_dir,
         'hoi_candidates_train_val.hdf5')
@@ -211,7 +211,7 @@ def exp_eval():
     exp_name = 'factors_rcnn_feats_scores_imgs_per_batch_1_focal_loss_False_fp_to_tp_ratio_1000_box_aware_model_True'
     out_base_dir = os.path.join(
         os.getcwd(),
-        'data_symlinks/weakly_supervised_hoi_exp/relation_classifier')
+        'data_symlinks/hico_exp/relation_classifier')
     exp_const = ExpConstants(
         exp_name=exp_name,
         out_base_dir=out_base_dir)
@@ -220,7 +220,7 @@ def exp_eval():
     data_const = FeatureBalancedConstants()
     hoi_cand_dir = os.path.join(
         os.getcwd(),
-        'data_symlinks/weakly_supervised_hoi_exp/hoi_candidates')
+        'data_symlinks/hico_exp/hoi_candidates')
     data_const.hoi_cands_hdf5 = os.path.join(
         hoi_cand_dir,
         'hoi_candidates_test.hdf5')
