@@ -5,6 +5,7 @@ from data.hico.hico_constants import HicoConstants
 
 def test_HicoConstants():
     hico_const = HicoConstants()
+    import pdb; pdb.set_trace()
     hico_const_json = os.path.join(
         '/home/tanmay/Data/weakly_supervised_hoi_exp/scratch',
         'hico_constants.json')

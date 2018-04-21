@@ -6,8 +6,8 @@ import utils.io as io
 class HicoConstants(io.JsonSerializableClass):
     def __init__(
             self,
-            clean_dir='/home/ssd/hico_det_clean_20160224',
-            proc_dir='/home/ssd/hico_det_processed_20160224'):
+            clean_dir=os.path.join(os.getcwd(),'data_symlinks/hico_clean'),
+            proc_dir=os.path.join(os.getcwd(),'data_symlinks/hico_processed')):
         self.clean_dir = clean_dir
         self.proc_dir = proc_dir
 
@@ -38,7 +38,7 @@ class HicoConstants(io.JsonSerializableClass):
 class HicoBoxesConstants(HicoConstants):
     def __init__(
             self,
-            clean_dir='/home/ssd/hico_det_clean_20160224',
-            proc_dir='/home/ssd/hico_det_processed_20160224'):
+            clean_dir=os.path.join(os.getcwd(),'data_symlinks/hico_clean'),
+            proc_dir=os.path.join(os.getcwd(),'data_symlinks/hico_processed')):
         super(HicoBoxesConstants,self).__init__(clean_dir,proc_dir)
         self.faster_rcnn_boxes = os.path.join(self.proc_dir,'faster_rcnn_boxes')
