@@ -14,7 +14,8 @@ from tensorboard_logger import configure, log_value
 import utils.io as io
 from utils.model import Model
 from utils.constants import save_constants
-from exp.relation_classifier.relation_classifier_model import RelationClassifier
+from exp.relation_classifier.relation_classifier_model import \
+    RelationClassifier, BoxAwareRelationClassifier
 from exp.relation_classifier.gather_relation_model import GatherRelation
 from exp.relation_classifier.features_balanced import FeaturesBalanced
 
@@ -23,17 +24,21 @@ def eval_model(model,dataset,exp_const):
     print('Creating hdf5 file for predicted hoi dets ...')
     pred_hoi_dets_hdf5 = os.path.join(
         exp_const.exp_dir,
-        f'pred_hoi_dets_{dataset.const.subset}_{model.model_num}.hdf5')
+        f'pred_hoi_dets_{dataset.const.subset}_{model.const.model_num}.hdf5')
     pred_hois = h5py.File(pred_hoi_dets_hdf5,'w')
     model.relation_classifier.eval()
     model.gather_relation.eval()
     sampler = SequentialSampler(dataset)
     for sample_id in tqdm(sampler):
         data = dataset[sample_id]
+        
         feats = {
             'human_rcnn': Variable(torch.cuda.FloatTensor(data['human_feat'])),
             'object_rcnn': Variable(torch.cuda.FloatTensor(data['object_feat']))
         }
+        if model.const.box_aware_model:
+            feats['box'] = Variable(torch.cuda.FloatTensor(data['box_feat']))
+
         human_prob_vec = Variable(torch.cuda.FloatTensor(data['human_prob_vec']))
         object_prob_vec = Variable(torch.cuda.FloatTensor(data['object_prob_vec']))
         hoi_labels = Variable(torch.cuda.FloatTensor(data['hoi_label_vec']))
@@ -62,12 +67,17 @@ def eval_model(model,dataset,exp_const):
 
     pred_hois.close()
 
+
 def main(exp_const,data_const,model_const):
     print('Loading model ...')
     model = Model()
-    model.model_num = model_const.model_num
-    model.relation_classifier = \
-        RelationClassifier(model_const.relation_classifier).cuda()
+    model.const = model_const
+    if model_const.box_aware_model:
+        model.relation_classifier = \
+            BoxAwareRelationClassifier(model_const.relation_classifier).cuda()
+    else:
+        model.relation_classifier = \
+            RelationClassifier(model_const.relation_classifier).cuda()
     model.gather_relation = GatherRelation(model_const.gather_relation).cuda()
     model.relation_classifier.load_state_dict(torch.load(
         model_const.relation_classifier.model_pth))
