@@ -12,7 +12,8 @@ class ExpConstants(Constants):
     def __init__(
             self,
             exp_name='default_exp',
-            out_base_dir='/home/tanmay/Data/weakly_supervised_hoi_exp'):
+            out_base_dir=os.path.join(
+                os.getcwd(),'data_symlinks/weakly_supervised_hoi_exp')):
         self.exp_name = exp_name
         self.out_base_dir = out_base_dir
         self.exp_dir = os.path.join(self.out_base_dir,self.exp_name)
