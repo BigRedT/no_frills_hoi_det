@@ -67,18 +67,17 @@ def exp_gen_and_label_hoi_cand():
         return
     
     exp_name = 'hoi_candidates'
-    exp_const = ExpConstants(
-        exp_name=exp_name,
-        out_base_dir='/home/tanmay/Data/weakly_supervised_hoi_exp')
+    exp_const = ExpConstants(exp_name=exp_name)
     exp_const.subset = args.subset
 
-    data_const = HicoConstants(
-        clean_dir='/home/ssd/hico_det_clean_20160224',
-        proc_dir='/home/ssd/hico_det_processed_20160224')
-    data_const.selected_dets_hdf5 = '/home/tanmay/Data/' + \
+    data_const = HicoConstants()
+    selected_dets_hdf5_relative_path = 'data_symlinks/' + \
         'weakly_supervised_hoi_exp/select_confident_boxes_in_hico/' + \
         'select_boxes_human_thresh_0.01_max_10_object_thresh_0.01_max_10/' + \
-        'selected_coco_cls_dets.hdf5' 
+        'selected_coco_cls_dets.hdf5'
+    data_const.selected_dets_hdf5 = os.path.join(
+        os.getcwd(),
+        selected_dets_hdf5_relative_path)
 
     if args.gen_hoi_cand:
         print('Generating HOI candidates from Faster-RCNN dets...')
@@ -101,9 +100,7 @@ def exp_compute_geometric_feats():
         required_args=['subset'])
     
     exp_name = 'hoi_candidates'
-    exp_const = ExpConstants(
-        exp_name=exp_name,
-        out_base_dir='/home/tanmay/Data/weakly_supervised_hoi_exp')
+    exp_const = ExpConstants(exp_name=exp_name)
     exp_const.subset = args.subset
 
     data_const = HicoConstants()
@@ -116,9 +113,9 @@ def exp_compute_geometric_feats():
 
 def exp_train():
     exp_name = 'factors_rcnn_feats_scores'
-    out_base_dir = \
-        '/home/tanmay/Data/weakly_supervised_hoi_exp' + \
-        '/relation_classifier'
+    out_base_dir = os.path.join(
+        os.getcwd(),
+        'data_symlinks/weakly_supervised_hoi_exp/relation_classifier')
     exp_const = ExpConstants(
         exp_name=exp_name,
         out_base_dir=out_base_dir)
@@ -129,8 +126,9 @@ def exp_train():
     exp_const.lr = 1e-3
 
     data_const = FeatureConstants()
-    hoi_cand_dir = '/home/tanmay/Data' + \
-        '/weakly_supervised_hoi_exp/hoi_candidates'
+    hoi_cand_dir = os.path.join(
+        os.getcwd(),
+        'data_symlinks/weakly_supervised_hoi_exp/hoi_candidates')
     data_const.hoi_cands_hdf5 = os.path.join(
         hoi_cand_dir,
         'hoi_candidates_train_val.hdf5')
@@ -164,9 +162,9 @@ def exp_train_balanced():
         f'focal_loss_{args.focal_loss}_' + \
         f'fp_to_tp_ratio_{args.fp_to_tp_ratio}_' + \
         f'box_aware_model_{args.box_aware_model}'
-    out_base_dir = \
-        '/home/tanmay/Data/weakly_supervised_hoi_exp' + \
-        '/relation_classifier'
+    out_base_dir = os.path.join(
+        os.getcwd(),
+        'data_symlinks/weakly_supervised_hoi_exp/relation_classifier')
     exp_const = ExpConstants(
         exp_name=exp_name,
         out_base_dir=out_base_dir)
@@ -178,8 +176,9 @@ def exp_train_balanced():
     exp_const.focal_loss = args.focal_loss
 
     data_const = FeatureBalancedConstants()
-    hoi_cand_dir = '/home/tanmay/Data' + \
-        '/weakly_supervised_hoi_exp/hoi_candidates'
+    hoi_cand_dir = os.path.join(
+        os.getcwd(),
+        'data_symlinks/weakly_supervised_hoi_exp/hoi_candidates')
     data_const.hoi_cands_hdf5 = os.path.join(
         hoi_cand_dir,
         'hoi_candidates_train_val.hdf5')
@@ -210,17 +209,18 @@ def exp_train_balanced():
 
 def exp_eval():
     exp_name = 'factors_rcnn_feats_scores_imgs_per_batch_1_focal_loss_False_fp_to_tp_ratio_1000_box_aware_model_True'
-    out_base_dir = \
-        '/home/tanmay/Data/weakly_supervised_hoi_exp' + \
-        '/relation_classifier'
+    out_base_dir = os.path.join(
+        os.getcwd(),
+        'data_symlinks/weakly_supervised_hoi_exp/relation_classifier')
     exp_const = ExpConstants(
         exp_name=exp_name,
         out_base_dir=out_base_dir)
     exp_const.model_dir = os.path.join(exp_const.exp_dir,'models')
 
     data_const = FeatureBalancedConstants()
-    hoi_cand_dir = '/home/tanmay/Data' + \
-        '/weakly_supervised_hoi_exp/hoi_candidates'
+    hoi_cand_dir = os.path.join(
+        os.getcwd(),
+        'data_symlinks/weakly_supervised_hoi_exp/hoi_candidates')
     data_const.hoi_cands_hdf5 = os.path.join(
         hoi_cand_dir,
         'hoi_candidates_test.hdf5')
