@@ -42,7 +42,36 @@ def compute_iou(bbox1,bbox2):
     area1 = compute_area(bbox1)
     area2 = compute_area(bbox2)
     union = area1 + area2 - intersection
-    iou = intersection / union
+    iou = intersection / (union + 1e-6)
+
+    return iou 
+
+
+def compute_area_batch(bbox):
+    x1,y1,x2,y2 = [bbox[:,i] for i in range(4)]
+    area = np.zeros(x1.shape[0])
+    valid_mask = np.logical_and(x2 > x1, y2 > y1)
+    area_ = (x2 - x1 + 1) * (y2 - y1 + 1)
+    area[valid_mask] = area_[valid_mask]
+    return area
+
+
+def compute_iou_batch(bbox1,bbox2):
+    x1,y1,x2,y2 = [bbox1[:,i] for i in range(4)]
+    x1_,y1_,x2_,y2_ = [bbox2[:,i] for i in range(4)]
+    
+    x1_in = np.maximum(x1,x1_)
+    y1_in = np.maximum(y1,y1_)
+    x2_in = np.minimum(x2,x2_)
+    y2_in = np.minimum(y2,y2_)
+    
+    intersection_bbox = np.stack((x1_in,y1_in,x2_in,y2_in),1)
+    intersection = compute_area_batch(bbox=intersection_bbox)
+    
+    area1 = compute_area_batch(bbox1)
+    area2 = compute_area_batch(bbox2)
+    union = area1 + area2 - intersection
+    iou = intersection / (union + 1e-6)
 
     return iou 
     
