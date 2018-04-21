@@ -1,4 +1,6 @@
 import os
+import torch
+import torch.nn as nn
 
 import utils.io as io
 
@@ -22,6 +24,8 @@ class Model(io.WritableToFile):
     def __str__(self):
         serialized = ''
         for model_name, model_instance in self.__dict__.items():
+            if not isinstance(model_instance,nn.Module):
+                continue
             serialized += '-'*80
             serialized += '\n'
             serialized += '\n'
