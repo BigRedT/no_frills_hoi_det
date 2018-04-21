@@ -15,7 +15,8 @@ import utils.io as io
 import utils.losses as losses
 from utils.model import Model
 from utils.constants import save_constants
-from exp.relation_classifier.relation_classifier_model import RelationClassifier
+from exp.relation_classifier.relation_classifier_model import \
+    RelationClassifier, BoxAwareRelationClassifier
 from exp.relation_classifier.gather_relation_model import GatherRelation
 from exp.relation_classifier.features_balanced import FeaturesBalanced
 
@@ -37,10 +38,14 @@ def train_model(model,dataset_train,dataset_val,exp_const):
         sampler = RandomSampler(dataset_train)
         for i, sample_id in enumerate(sampler):
             data = dataset_train[sample_id]
+            
             feats = {
                 'human_rcnn': Variable(torch.cuda.FloatTensor(data['human_feat'])),
                 'object_rcnn': Variable(torch.cuda.FloatTensor(data['object_feat']))
             }
+            if model.const.box_aware_model:
+                feats['box'] = Variable(torch.cuda.FloatTensor(data['box_feat']))
+
             human_prob_vec = Variable(torch.cuda.FloatTensor(data['human_prob_vec']))
             object_prob_vec = Variable(torch.cuda.FloatTensor(data['object_prob_vec']))
             hoi_labels = Variable(torch.cuda.FloatTensor(data['hoi_label_vec']))
@@ -124,10 +129,14 @@ def eval_model(model,dataset,exp_const):
             break
 
         data = dataset[sample_id]
+        
         feats = {
             'human_rcnn': Variable(torch.cuda.FloatTensor(data['human_feat'])),
             'object_rcnn': Variable(torch.cuda.FloatTensor(data['object_feat']))
         }
+        if model.const.box_aware_model:
+            feats['box'] = Variable(torch.cuda.FloatTensor(data['box_feat']))
+
         human_prob_vec = Variable(torch.cuda.FloatTensor(data['human_prob_vec']))
         object_prob_vec = Variable(torch.cuda.FloatTensor(data['object_prob_vec']))
         hoi_labels = Variable(torch.cuda.FloatTensor(data['hoi_label_vec']))
@@ -157,8 +166,13 @@ def main(exp_const,data_const,model_const):
 
     print('Creating model ...')
     model = Model()
-    model.relation_classifier = \
-        RelationClassifier(model_const.relation_classifier).cuda()
+    model.const = model_const
+    if model_const.box_aware_model:
+        model.relation_classifier = \
+            BoxAwareRelationClassifier(model_const.relation_classifier).cuda()
+    else:
+        model.relation_classifier = \
+            RelationClassifier(model_const.relation_classifier).cuda()
     model.gather_relation = GatherRelation(model_const.gather_relation).cuda()
     model.to_txt(exp_const.exp_dir,single_file=True)
 
