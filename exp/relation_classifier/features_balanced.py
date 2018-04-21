@@ -15,6 +15,7 @@ class FeatureBalancedConstants(HicoConstants,io.JsonSerializableClass):
         self.hoi_cands_hdf5 = None
         self.hoi_cand_labels_hdf5 = None
         self.faster_rcnn_feats_hdf5 = None
+        self.box_feats_hdf5 = None
         self.balanced_sampling = False
         self.fp_to_tp_ratio = 4
         self.subset = 'train'
@@ -31,7 +32,8 @@ class FeaturesBalanced(Dataset):
         self.global_ids = self.load_subset_ids(self.const.subset)
         self.hoi_dict = self.get_hoi_dict(self.const.hoi_list_json)
         self.obj_to_hoi_ids = self.get_obj_to_hoi_ids(self.hoi_dict)
-        print('Dataset ready for iteration')
+        if self.const.box_feats_hdf5:
+            self.box_feats = self.load_hdf5_file(self.const.box_feats_hdf5)
 
     def load_hdf5_file(self,hdf5_filename,mode='r'):
         return h5py.File(hdf5_filename,mode)
@@ -106,22 +108,33 @@ class FeaturesBalanced(Dataset):
         start_end_ids = self.hoi_cands[global_id]['start_end_ids'][()]
         hoi_cands_ = self.hoi_cands[global_id]['boxes_scores_rpn_ids_hoi_idx'][()]
         hoi_ids_, hoi_labels_, hoi_label_vecs_ = self.get_labels(global_id)
+        if self.const.box_feats_hdf5:
+            box_feats_ =  self.box_feats[global_id][()]
+        else:
+            box_feats_ = None
+
         if self.const.balanced_sampling:
             cand_ids = self.sample_cands(hoi_labels_)
             hoi_cands = hoi_cands_[cand_ids]
             hoi_ids = np.array(hoi_ids_)[cand_ids].tolist()
             hoi_labels = hoi_labels_[cand_ids]
             hoi_label_vecs = hoi_label_vecs_[cand_ids]
+            if box_feats_ is not None:
+                box_feats = box_feats_[cand_ids]
+            else:
+                box_feats = None
         else:
             hoi_cands = hoi_cands_
             hoi_ids = hoi_ids_
             hoi_labels = hoi_labels_
             hoi_label_vecs = hoi_label_vecs_
+            box_feats = box_feats_
         
         to_return = {
             'global_id': global_id,
             'human_box': hoi_cands[:,:4],
             'object_box': hoi_cands[:,4:8],
+            'box_feat': box_feats,
             'human_prob': hoi_cands[:,8],
             'object_prob': hoi_cands[:,9],
             'human_rpn_id': hoi_cands[:,10].astype(np.int),
@@ -133,6 +146,7 @@ class FeaturesBalanced(Dataset):
             'hoi_cands_': hoi_cands_,
             'start_end_ids_': start_end_ids.astype(np.int), # Corresponds to non sampled hoi_cands_ which is the same as hoi_cands when balanced sampling is not used
         }
+        
         to_return['human_feat'] = np.take(
             self.faster_rcnn_feats[global_id],
             to_return['human_rpn_id'],
