@@ -161,7 +161,8 @@ def exp_train_balanced():
         f'imgs_per_batch_{args.imgs_per_batch}_' + \
         f'focal_loss_{args.focal_loss}_' + \
         f'fp_to_tp_ratio_{args.fp_to_tp_ratio}_' + \
-        f'box_aware_model_{args.box_aware_model}'
+        f'box_aware_model_{args.box_aware_model}_' + \
+        f'box_prob'
     out_base_dir = os.path.join(
         os.getcwd(),
         'data_symlinks/hico_exp/relation_classifier')
@@ -208,7 +209,7 @@ def exp_train_balanced():
 
 
 def exp_eval():
-    exp_name = 'factors_rcnn_feats_scores_imgs_per_batch_1_focal_loss_False_fp_to_tp_ratio_1000_box_aware_model_True'
+    exp_name = 'factors_rcnn_feats_scores_imgs_per_batch_1_focal_loss_False_fp_to_tp_ratio_1000_box_aware_model_True_box_prob'
     out_base_dir = os.path.join(
         os.getcwd(),
         'data_symlinks/hico_exp/relation_classifier')
@@ -237,7 +238,7 @@ def exp_eval():
     data_const.subset = 'test' 
     
     model_const = Constants()
-    model_const.model_num = 80000
+    model_const.model_num = 60000
     model_const.box_aware_model = True
     if model_const.box_aware_model:
         model_const.relation_classifier = BoxAwareRelationClassifierConstants()
