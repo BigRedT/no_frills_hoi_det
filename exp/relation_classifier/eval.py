@@ -14,10 +14,10 @@ from tensorboard_logger import configure, log_value
 import utils.io as io
 from utils.model import Model
 from utils.constants import save_constants
-from exp.relation_classifier.relation_classifier_model import \
+from exp.relation_classifier.models.relation_classifier_model import \
     RelationClassifier, BoxAwareRelationClassifier
-from exp.relation_classifier.gather_relation_model import GatherRelation
-from exp.relation_classifier.features_balanced import FeaturesBalanced
+from exp.relation_classifier.models.gather_relation_model import GatherRelation
+from exp.relation_classifier.data.features_balanced import FeaturesBalanced
 
 
 def eval_model(model,dataset,exp_const):

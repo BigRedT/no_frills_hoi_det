@@ -4,19 +4,19 @@ from utils.argparse_utils import manage_required_args
 from exp.experimenter import *
 from data.hico.hico_constants import HicoConstants
 from utils.constants import Constants, ExpConstants
-import exp.relation_classifier.hoi_candidates as hoi_candidates
-import exp.relation_classifier.label_hoi_candidates as label_hoi_candidates
-from exp.relation_classifier.relation_classifier_model import \
+import exp.relation_classifier.data.hoi_candidates as hoi_candidates
+import exp.relation_classifier.data.label_hoi_candidates as label_hoi_candidates
+from exp.relation_classifier.models.relation_classifier_model import \
     RelationClassifierConstants, BoxAwareRelationClassifierConstants
-from exp.relation_classifier.gather_relation_model import \
+from exp.relation_classifier.models.gather_relation_model import \
     GatherRelationConstants
 import exp.relation_classifier.train as train
 import exp.relation_classifier.train_balanced as train_balanced
 import exp.relation_classifier.eval as evaluate
-from exp.relation_classifier.features import FeatureConstants
-from exp.relation_classifier.features_balanced import \
+from exp.relation_classifier.data.features import FeatureConstants
+from exp.relation_classifier.data.features_balanced import \
     FeatureBalancedConstants
-import exp.relation_classifier.write_geometric_feats_to_hdf5 as \
+import exp.relation_classifier.data.write_geometric_feats_to_hdf5 as \
     write_geometric_feats_to_hdf5
 
 parser.add_argument(

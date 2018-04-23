@@ -13,9 +13,9 @@ from tensorboard_logger import configure, log_value
 import utils.io as io
 from utils.model import Model
 from utils.constants import save_constants
-from exp.relation_classifier.relation_classifier_model import RelationClassifier
-from exp.relation_classifier.gather_relation_model import GatherRelation
-from exp.relation_classifier.features import Features
+from exp.relation_classifier.models.relation_classifier_model import RelationClassifier
+from exp.relation_classifier.models.gather_relation_model import GatherRelation
+from exp.relation_classifier.data.features import Features
 
 
 def train_model(model,data_loader_train,data_loader_val,exp_const):

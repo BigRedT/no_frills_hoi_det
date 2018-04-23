@@ -15,10 +15,10 @@ import utils.io as io
 import utils.losses as losses
 from utils.model import Model
 from utils.constants import save_constants
-from exp.relation_classifier.relation_classifier_model import \
+from exp.relation_classifier.models.relation_classifier_model import \
     RelationClassifier, BoxAwareRelationClassifier
-from exp.relation_classifier.gather_relation_model import GatherRelation
-from exp.relation_classifier.features_balanced import FeaturesBalanced
+from exp.relation_classifier.models.gather_relation_model import GatherRelation
+from exp.relation_classifier.data.features_balanced import FeaturesBalanced
 
 
 def train_model(model,dataset_train,dataset_val,exp_const):
