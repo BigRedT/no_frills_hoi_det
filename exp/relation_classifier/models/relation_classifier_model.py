@@ -77,6 +77,7 @@ class BoxAwareRelationClassifierConstants(RelationClassifierConstants):
         }
         return factor_const
     
+    
 class BoxAwareRelationClassifier(RelationClassifier):
     def __init__(self,const):
         super(BoxAwareRelationClassifier,self).__init__(const)
@@ -92,3 +93,9 @@ class BoxAwareRelationClassifier(RelationClassifier):
         relation_prob = self.sigmoid(faster_rcnn_feature_factor_scores) * \
             self.sigmoid(box_feature_factor_scores)
         return relation_prob
+
+    def forward_box_feature_factor(self,feats):
+        box_feature_factor_scores = self.box_feature_factor(feats['box'])
+        box_feature_factor_prob = self.sigmoid(box_feature_factor_scores)
+        return box_feature_factor_prob, box_feature_factor_scores
+    
