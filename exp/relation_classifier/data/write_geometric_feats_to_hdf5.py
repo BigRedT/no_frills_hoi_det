@@ -5,7 +5,7 @@ import numpy as np
 from tqdm import tqdm
 
 import utils.io as io
-from exp.relation_classifier.geometric_features import \
+from exp.relation_classifier.data.geometric_features import \
     GeometricFeatures, GeometricFeaturesBatch
 
 
