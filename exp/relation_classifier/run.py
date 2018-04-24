@@ -18,6 +18,8 @@ from exp.relation_classifier.data.features_balanced import \
     FeatureBalancedConstants
 import exp.relation_classifier.data.write_geometric_feats_to_hdf5 as \
     write_geometric_feats_to_hdf5
+import exp.relation_classifier.vis.top_boxes_per_relation as \
+    vis_top_boxes_per_relation
 
 parser.add_argument(
     '--gen_hoi_cand',
@@ -251,6 +253,48 @@ def exp_eval():
         exp_const.model_dir,
         f'relation_classifier_{model_const.model_num}')
     evaluate.main(exp_const,data_const,model_const)
+
+
+def exp_top_boxes_per_relation():
+    exp_name = 'factors_rcnn_feats_scores_imgs_per_batch_1_focal_loss_False_fp_to_tp_ratio_1000_box_aware_model_True_box_prob'
+    out_base_dir = os.path.join(
+        os.getcwd(),
+        'data_symlinks/hico_exp/relation_classifier')
+    exp_const = ExpConstants(
+        exp_name=exp_name,
+        out_base_dir=out_base_dir)
+    exp_const.model_dir = os.path.join(exp_const.exp_dir,'models')
+
+    data_const = FeatureBalancedConstants()
+    hoi_cand_dir = os.path.join(
+        os.getcwd(),
+        'data_symlinks/hico_exp/hoi_candidates')
+    data_const.hoi_cands_hdf5 = os.path.join(
+        hoi_cand_dir,
+        'hoi_candidates_train_val.hdf5')
+    data_const.box_feats_hdf5 = os.path.join(
+        hoi_cand_dir,
+        'hoi_candidates_geometric_feats_train_val.hdf5')
+    data_const.hoi_cand_labels_hdf5 = os.path.join(
+        hoi_cand_dir,
+        'hoi_candidate_labels_train_val.hdf5')
+    data_const.faster_rcnn_feats_hdf5 = os.path.join(
+        data_const.proc_dir,
+        'faster_rcnn_fc7.hdf5')
+    data_const.balanced_sampling = False
+    data_const.subset = 'val' 
+    
+    model_const = Constants()
+    model_const.model_num = 60000
+    model_const.relation_classifier = BoxAwareRelationClassifierConstants()
+    model_const.gather_relation = GatherRelationConstants()
+    model_const.gather_relation.hoi_list_json = data_const.hoi_list_json
+    model_const.gather_relation.verb_list_json = data_const.verb_list_json
+    model_const.relation_classifier.model_pth = os.path.join(
+        exp_const.model_dir,
+        f'relation_classifier_{model_const.model_num}')
+
+    vis_top_boxes_per_relation.main(exp_const,data_const,model_const)
 
 
 if __name__=='__main__':
