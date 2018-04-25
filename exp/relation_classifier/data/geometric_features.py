@@ -91,6 +91,9 @@ class GeometricFeaturesBatch():
     def normalize_center(self,c,im_wh):
         return c / im_wh
 
+    def compute_l2_norm(self,v):
+        return np.sqrt(np.sum(v**2))
+
     def compute_bbox_wh(self,bbox):
         num_boxes = bbox.shape[0]
         wh = np.zeros([num_boxes,2])
@@ -122,9 +125,13 @@ class GeometricFeaturesBatch():
         bbox_area = bbox_area / norm_factor
         return bbox_area
 
+    def compute_im_center(self,im_wh):
+        return im_wh/2
+
     def compute_features(self,bbox1,bbox2,im_wh):
         # bbox1 = copy.deepcopy(bbox1).astype(np.float32)
         # bbox2 = copy.deepcopy(bbox2).astype(np.float32)
+        im_c = self.compute_im_center(im_wh)
         c1 = self.compute_bbox_center(bbox1)
         c2 = self.compute_bbox_center(bbox2)
         c1_normalized = self.normalize_center(c1,im_wh)
@@ -135,18 +142,26 @@ class GeometricFeaturesBatch():
         aspect_ratio2 = self.compute_aspect_ratio(wh2,take_log=True)
         area1 = self.compute_bbox_area(wh1,im_wh,normalize=True)
         area2 = self.compute_bbox_area(wh2,im_wh,normalize=True)
-        offset = self.compute_offset(c1,c2,wh1,normalize=True)
+        offset = self.compute_offset(c1,c2,wh1,normalize=False)
+        offset_normalized = self.compute_offset(c1,c2,wh1,normalize=True)
+        dist = self.compute_l2_norm
         bbox_size_ratio = self.compute_bbox_size_ratio(wh1,wh2,take_log=True)
         iou = bbox_utils.compute_iou_batch(bbox1,bbox2)
         geometric_feat = np.concatenate((
             offset,
+            offset_normalized,
             bbox_size_ratio[:,np.newaxis],
             iou[:,np.newaxis],
             aspect_ratio1[:,np.newaxis],
             aspect_ratio2[:,np.newaxis],
             area1[:,np.newaxis],
             area2[:,np.newaxis],
-            c1_normalized,
-            c2_normalized,
+            c1-im_c,
+            c2-im_c,
+            c1_normalized-0.5,
+            c2_normalized-0.5,
+            np.log2(wh1+1e-6),
+            np.log2(wh2+1e-6),
+            np.log2(im_wh+1e-6),
         ),1)
         return geometric_feat
