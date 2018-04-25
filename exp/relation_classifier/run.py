@@ -8,10 +8,14 @@ import exp.relation_classifier.data.hoi_candidates as hoi_candidates
 import exp.relation_classifier.data.label_hoi_candidates as label_hoi_candidates
 from exp.relation_classifier.models.relation_classifier_model import \
     RelationClassifierConstants, BoxAwareRelationClassifierConstants
+from exp.relation_classifier.models.geometric_factor_model import \
+    GeometricFactorConstants
 from exp.relation_classifier.models.gather_relation_model import \
     GatherRelationConstants
 import exp.relation_classifier.train as train
 import exp.relation_classifier.train_balanced as train_balanced
+import exp.relation_classifier.train_balanced_geometric_only as \
+    train_balanced_geometric_only
 import exp.relation_classifier.eval as evaluate
 from exp.relation_classifier.data.features import FeatureConstants
 from exp.relation_classifier.data.features_balanced import \
@@ -208,6 +212,59 @@ def exp_train_balanced():
     model_const.gather_relation.verb_list_json = data_const.verb_list_json
 
     train_balanced.main(exp_const,data_const,model_const)
+
+
+def exp_train_balanced_geometric_only():
+    args = parser.parse_args()
+    not_specified_args = manage_required_args(
+        args,
+        parser,
+        required_args=['imgs_per_batch','fp_to_tp_ratio'],
+        optional_args=['focal_loss'])
+
+    exp_name = 'factors_geometric_' + \
+        f'imgs_per_batch_{args.imgs_per_batch}_' + \
+        f'focal_loss_{args.focal_loss}_' + \
+        f'fp_to_tp_ratio_{args.fp_to_tp_ratio}'
+    out_base_dir = os.path.join(
+        os.getcwd(),
+        'data_symlinks/hico_exp/relation_classifier')
+    exp_const = ExpConstants(
+        exp_name=exp_name,
+        out_base_dir=out_base_dir)
+    exp_const.log_dir = os.path.join(exp_const.exp_dir,'log')
+    exp_const.model_dir = os.path.join(exp_const.exp_dir,'models')
+    exp_const.num_epochs = 10
+    exp_const.imgs_per_batch = args.imgs_per_batch
+    exp_const.lr = 1e-3
+    exp_const.focal_loss = args.focal_loss
+
+    data_const = FeatureBalancedConstants()
+    hoi_cand_dir = os.path.join(
+        os.getcwd(),
+        'data_symlinks/hico_exp/hoi_candidates')
+    data_const.hoi_cands_hdf5 = os.path.join(
+        hoi_cand_dir,
+        'hoi_candidates_train_val.hdf5')
+    data_const.box_feats_hdf5 = os.path.join(
+        hoi_cand_dir,
+        'hoi_candidates_geometric_feats_train_val.hdf5')
+    data_const.hoi_cand_labels_hdf5 = os.path.join(
+        hoi_cand_dir,
+        'hoi_candidate_labels_train_val.hdf5')
+    data_const.faster_rcnn_feats_hdf5 = os.path.join(
+        data_const.proc_dir,
+        'faster_rcnn_fc7.hdf5')
+    data_const.fp_to_tp_ratio = args.fp_to_tp_ratio
+    data_const.subset = None # to be set in the train_balanced.py script
+    
+    model_const = Constants()
+    model_const.geometric_factor = GeometricFactorConstants()
+    model_const.gather_relation = GatherRelationConstants()
+    model_const.gather_relation.hoi_list_json = data_const.hoi_list_json
+    model_const.gather_relation.verb_list_json = data_const.verb_list_json
+
+    train_balanced_geometric_only.main(exp_const,data_const,model_const)
 
 
 def exp_eval():
