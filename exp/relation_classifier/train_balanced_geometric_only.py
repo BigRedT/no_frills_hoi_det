@@ -19,7 +19,7 @@ from utils.constants import save_constants
 from exp.relation_classifier.models.relation_classifier_model import \
     RelationClassifier, BoxAwareRelationClassifier
 from exp.relation_classifier.models.geometric_factor_model import \
-    GeometricFactor
+    GeometricFactor, GeometricFactorPairwise
 from exp.relation_classifier.models.gather_relation_model import GatherRelation
 from exp.relation_classifier.data.features_balanced import FeaturesBalanced
 
@@ -51,8 +51,12 @@ def train_model(model,dataset_train,dataset_val,exp_const):
 
             model.geometric_factor.train()
             model.gather_relation.train()
-            geometric_logits = model.geometric_factor(feats)
-            relation_prob_vec = sigmoid(model.gather_relation(geometric_logits))
+            if model.const.geometric_per_hoi:
+                geometric_logits = model.geometric_factor(feats)
+            else:
+                geometric_factor = model.geometric_factor(feats)
+                geometric_logits = model.gather_relation(geometric_factor)
+            relation_prob_vec = sigmoid(geometric_logits)
 
             hoi_prob = relation_prob_vec
 
@@ -138,8 +142,12 @@ def eval_model(model,dataset,exp_const):
         
         hoi_labels = Variable(torch.cuda.FloatTensor(data['hoi_label_vec']))
 
-        geometric_logits = model.geometric_factor(feats)
-        relation_prob_vec = sigmoid(model.gather_relation(geometric_logits))
+        if model.const.geometric_per_hoi:
+            geometric_logits = model.geometric_factor(feats)
+        else:
+            geometric_factor = model.geometric_factor(feats)
+            geometric_logits = model.gather_relation(geometric_factor)
+        relation_prob_vec = sigmoid(geometric_logits)
 
         hoi_prob = relation_prob_vec
 
@@ -164,8 +172,13 @@ def main(exp_const,data_const,model_const):
     print('Creating model ...')
     model = Model()
     model.const = model_const
-    model.geometric_factor = GeometricFactor(model_const.geometric_factor).cuda()
-    model.gather_relation = GatherRelation(model_const.gather_relation).cuda()
+    if model.const.geometric_pairwise:
+        model.geometric_factor = \
+            GeometricFactorPairwise(model.const.geometric_factor).cuda()
+    else:
+        model.geometric_factor = \
+            GeometricFactor(model.const.geometric_factor).cuda()
+    model.gather_relation = GatherRelation(model.const.gather_relation).cuda()
     model.to_txt(exp_const.exp_dir,single_file=True)
 
     print('Creating data loaders ...')
