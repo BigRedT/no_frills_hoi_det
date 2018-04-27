@@ -40,6 +40,9 @@ def eval_model(model,dataset,exp_const):
         feats['box'] = Variable(torch.cuda.FloatTensor(data['box_feat']))
 
         hoi_labels = Variable(torch.cuda.FloatTensor(data['hoi_label_vec']))
+        human_prob_vec = Variable(torch.cuda.FloatTensor(data['human_prob_vec']))
+        object_prob_vec = Variable(torch.cuda.FloatTensor(data['object_prob_vec']))
+
 
         if model.const.geometric_per_hoi:
             geometric_logits = model.geometric_factor(feats)
@@ -48,7 +51,7 @@ def eval_model(model,dataset,exp_const):
             geometric_logits = model.gather_relation(geometric_factor)
         relation_prob_vec = sigmoid(geometric_logits)
 
-        hoi_prob = relation_prob_vec
+        hoi_prob = relation_prob_vec * human_prob_vec * object_prob_vec
         hoi_prob = hoi_prob.data.cpu().numpy()
         
         num_cand = hoi_prob.shape[0]
