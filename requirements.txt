@@ -3,6 +3,7 @@ tqdm
 scikit-image
 scikit-learn
 h5py
+plotly
 
 # Logging
 tensorboard-logger
