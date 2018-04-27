@@ -4,7 +4,7 @@ import time
 import h5py
 from tqdm import tqdm
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 from multiprocessing import Pool
 from sklearn.metrics import average_precision_score, precision_recall_curve
 
