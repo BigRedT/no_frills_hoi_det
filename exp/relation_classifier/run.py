@@ -25,6 +25,8 @@ import exp.relation_classifier.data.write_geometric_feats_to_hdf5 as \
     write_geometric_feats_to_hdf5
 import exp.relation_classifier.vis.top_boxes_per_relation as \
     vis_top_boxes_per_relation
+import exp.relation_classifier.vis.top_boxes_per_relation_geometric_only as \
+    vis_top_boxes_per_relation_geometric_only
 
 parser.add_argument(
     '--gen_hoi_cand',
@@ -71,6 +73,10 @@ parser.add_argument(
     default=False,
     action='store_true',
     help='Apply this flag to use geometric pairwise potentials')
+parser.add_argument(
+    '--model_num',
+    type=int,
+    help='Specify model number to evaluate')
 
 
 def exp_gen_and_label_hoi_cand():
@@ -241,7 +247,7 @@ def exp_train_balanced_geometric_only():
     if args.geometric_pairwise:
         geometric_str += '_pairwise'
      
-    exp_name = f'factors_{geometric_str}_' + \
+    exp_name = f'factors_{geometric_str}_indicator_' + \
         f'imgs_per_batch_{args.imgs_per_batch}_' + \
         f'focal_loss_{args.focal_loss}_' + \
         f'fp_to_tp_ratio_{args.fp_to_tp_ratio}'
@@ -345,7 +351,7 @@ def exp_eval_geometric_only():
     not_specified_args = manage_required_args(
         args,
         parser,
-        required_args=['imgs_per_batch','fp_to_tp_ratio'],
+        required_args=['imgs_per_batch','fp_to_tp_ratio','model_num'],
         optional_args=['focal_loss','geometric_per_hoi','geometric_pairwise'])
 
     if args.geometric_per_hoi:
@@ -356,7 +362,7 @@ def exp_eval_geometric_only():
     if args.geometric_pairwise:
         geometric_str += '_pairwise'
      
-    exp_name = f'factors_{geometric_str}_' + \
+    exp_name = f'factors_{geometric_str}_indicator_' + \
         f'imgs_per_batch_{args.imgs_per_batch}_' + \
         f'focal_loss_{args.focal_loss}_' + \
         f'fp_to_tp_ratio_{args.fp_to_tp_ratio}'
@@ -389,7 +395,7 @@ def exp_eval_geometric_only():
     data_const.subset = 'test' 
     
     model_const = Constants()
-    model_const.model_num = 40000
+    model_const.model_num = args.model_num
     
     model_const.geometric_pairwise = args.geometric_pairwise
     if model_const.geometric_pairwise:
@@ -408,6 +414,77 @@ def exp_eval_geometric_only():
         exp_const.model_dir,
         f'geometric_factor_{model_const.model_num}')
     evaluate_geometric_only.main(exp_const,data_const,model_const)
+
+
+def exp_top_boxes_per_relation_geometric_only():
+    args = parser.parse_args()
+    not_specified_args = manage_required_args(
+        args,
+        parser,
+        required_args=['imgs_per_batch','fp_to_tp_ratio','model_num'],
+        optional_args=['focal_loss','geometric_per_hoi','geometric_pairwise'])
+
+    if args.geometric_per_hoi:
+        geometric_str = 'geometric_per_hoi'
+    else:
+        geometric_str = 'geometric'
+
+    if args.geometric_pairwise:
+        geometric_str += '_pairwise'
+     
+    exp_name = f'factors_{geometric_str}_indicator_' + \
+        f'imgs_per_batch_{args.imgs_per_batch}_' + \
+        f'focal_loss_{args.focal_loss}_' + \
+        f'fp_to_tp_ratio_{args.fp_to_tp_ratio}'
+
+    out_base_dir = os.path.join(
+        os.getcwd(),
+        'data_symlinks/hico_exp/relation_classifier')
+    exp_const = ExpConstants(
+        exp_name=exp_name,
+        out_base_dir=out_base_dir)
+    exp_const.model_dir = os.path.join(exp_const.exp_dir,'models')
+
+    data_const = FeatureBalancedConstants()
+    hoi_cand_dir = os.path.join(
+        os.getcwd(),
+        'data_symlinks/hico_exp/hoi_candidates')
+    data_const.hoi_cands_hdf5 = os.path.join(
+        hoi_cand_dir,
+        'hoi_candidates_train_val.hdf5')
+    data_const.box_feats_hdf5 = os.path.join(
+        hoi_cand_dir,
+        'hoi_candidates_geometric_feats_train_val.hdf5')
+    data_const.hoi_cand_labels_hdf5 = os.path.join(
+        hoi_cand_dir,
+        'hoi_candidate_labels_train_val.hdf5')
+    data_const.faster_rcnn_feats_hdf5 = os.path.join(
+        data_const.proc_dir,
+        'faster_rcnn_fc7.hdf5')
+    data_const.balanced_sampling = False
+    data_const.subset = 'val' 
+    
+    model_const = Constants()
+    model_const.model_num = args.model_num
+    
+    model_const.geometric_pairwise = args.geometric_pairwise
+    if model_const.geometric_pairwise:
+        model_const.geometric_factor = GeometricFactorPairwiseConstants()
+    else:
+        model_const.geometric_factor = GeometricFactorConstants() 
+    
+    model_const.geometric_per_hoi = args.geometric_per_hoi
+    if model_const.geometric_per_hoi:
+        model_const.geometric_factor.out_dim = 600
+
+    model_const.gather_relation = GatherRelationConstants()
+    model_const.gather_relation.hoi_list_json = data_const.hoi_list_json
+    model_const.gather_relation.verb_list_json = data_const.verb_list_json
+    model_const.geometric_factor.model_pth = os.path.join(
+        exp_const.model_dir,
+        f'geometric_factor_{model_const.model_num}')
+
+    vis_top_boxes_per_relation_geometric_only.main(exp_const,data_const,model_const)
 
 
 def exp_top_boxes_per_relation():
