@@ -47,6 +47,8 @@ def train_model(model,dataset_train,dataset_val,exp_const):
             feats = {}
             feats['box'] = Variable(torch.cuda.FloatTensor(data['box_feat']))
             
+            human_prob_vec = Variable(torch.cuda.FloatTensor(data['human_prob_vec']))
+            object_prob_vec = Variable(torch.cuda.FloatTensor(data['object_prob_vec']))
             hoi_labels = Variable(torch.cuda.FloatTensor(data['hoi_label_vec']))
 
             model.geometric_factor.train()
@@ -58,7 +60,7 @@ def train_model(model,dataset_train,dataset_val,exp_const):
                 geometric_logits = model.gather_relation(geometric_factor)
             relation_prob_vec = sigmoid(geometric_logits)
 
-            hoi_prob = relation_prob_vec
+            hoi_prob = relation_prob_vec * human_prob_vec * object_prob_vec
 
             loss = criterion(hoi_prob,hoi_labels)
 
@@ -140,6 +142,8 @@ def eval_model(model,dataset,exp_const):
         feats = {}
         feats['box'] = Variable(torch.cuda.FloatTensor(data['box_feat']))
         
+        human_prob_vec = Variable(torch.cuda.FloatTensor(data['human_prob_vec']))
+        object_prob_vec = Variable(torch.cuda.FloatTensor(data['object_prob_vec']))
         hoi_labels = Variable(torch.cuda.FloatTensor(data['hoi_label_vec']))
 
         if model.const.geometric_per_hoi:
@@ -149,7 +153,7 @@ def eval_model(model,dataset,exp_const):
             geometric_logits = model.gather_relation(geometric_factor)
         relation_prob_vec = sigmoid(geometric_logits)
 
-        hoi_prob = relation_prob_vec
+        hoi_prob = relation_prob_vec * human_prob_vec * object_prob_vec
 
         loss = criterion(hoi_prob,hoi_labels)
 
