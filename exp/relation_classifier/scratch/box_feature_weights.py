@@ -20,7 +20,7 @@ from exp.relation_classifier.models.gather_relation_model import \
 
 
 def main():
-    exp_name = 'factors_geometric_indicator_imgs_per_batch_1_focal_loss_False_fp_to_tp_ratio_1000'
+    exp_name = 'factors_geometric_indicator_imgs_per_batch_1_focal_loss_False_fp_to_tp_ratio_1000_prob_mask'
     out_base_dir = os.path.join(
         os.getcwd(),
         'data_symlinks/hico_exp/relation_classifier')
@@ -33,7 +33,7 @@ def main():
 
     # Model Constants
     model_const = Constants()
-    model_const.model_num = 60000
+    model_const.model_num = 20000
     
     model_const.geometric_pairwise = False
     if model_const.geometric_pairwise:
