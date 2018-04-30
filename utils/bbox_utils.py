@@ -77,7 +77,12 @@ def compute_iou_batch(bbox1,bbox2):
     
 
 def vis_bbox(bbox,img,color=(0,0,0),modify=False):
+    im_h,im_w = img.shape[0:2]
     x1,y1,x2,y2 = bbox
+    x1 = max(0,min(x1,im_w-1))
+    x2 = max(x1,min(x2,im_w-1))
+    y1 = max(0,min(y1,im_h-1))
+    y2 = max(y1,min(y2,im_h-1))
     r = [y1,y1,y2,y2]
     c = [x1,x2,x2,x1]
     rr,cc = skdraw.polygon_perimeter(r,c,img.shape[:2])
@@ -108,6 +113,7 @@ def vis_bboxes(bboxes,img,color=(0,0,0),modify=False):
 
 
 def join_bboxes_by_line(bbox1,bbox2,img,color=(255,0,0),modify=False):
+    im_h,im_w = img.shape[0:2]
     x1,y1,x2,y2 = bbox1
     x1_,y1_,x2_,y2_ = bbox2
 
@@ -116,6 +122,10 @@ def join_bboxes_by_line(bbox1,bbox2,img,color=(255,0,0),modify=False):
     c1 = 0.5*(x1_+x2_)
     r1 = 0.5*(y1_+y2_)
     r0,c0,r1,c1 = [int(x) for x in [r0,c0,r1,c1]]
+    c0 = max(0,min(c0,im_w-1))
+    c1 = max(0,min(c1,im_w-1))
+    r0 = max(0,min(r0,im_h-1))
+    r1 = max(0,min(r1,im_h-1))
     rr,cc,val = skdraw.draw.line_aa(r0,c0,r1,c1)
     
     if modify:
