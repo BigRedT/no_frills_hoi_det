@@ -38,7 +38,9 @@ def eval_model(model,dataset,exp_const):
         
         feats = {}
         feats['box'] = Variable(torch.cuda.FloatTensor(data['box_feat']))
-
+        feats['object_one_hot'] = Variable(torch.cuda.FloatTensor(data['object_one_hot']))
+        feats['verb_one_hot'] = Variable(torch.cuda.FloatTensor(data['verb_one_hot']))
+        
         hoi_labels = Variable(torch.cuda.FloatTensor(data['hoi_label_vec']))
         human_prob_vec = Variable(torch.cuda.FloatTensor(data['human_prob_vec']))
         object_prob_vec = Variable(torch.cuda.FloatTensor(data['object_prob_vec']))
