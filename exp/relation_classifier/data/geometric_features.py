@@ -114,7 +114,10 @@ class GeometricFeaturesBatch():
         return aspect_ratio
 
     def compute_bbox_size_ratio(self,wh1,wh2,take_log):
-        return np.log2((wh2[:,0]*wh2[:,1])/(wh1[:,0]*wh1[:,1]))
+        ratio = (wh2[:,0]*wh2[:,1])/(wh1[:,0]*wh1[:,1])
+        if take_log:
+            ratio = np.log2(ratio+1e-6)
+        return ratio
             
     def compute_bbox_area(self,wh,im_wh,normalize):
         bbox_area = wh[:,0]*wh[:,1]
@@ -128,9 +131,42 @@ class GeometricFeaturesBatch():
     def compute_im_center(self,im_wh):
         return im_wh/2
 
+    # def compute_features(self,bbox1,bbox2,im_wh):
+    #     im_c = self.compute_im_center(im_wh)
+    #     c1 = self.compute_bbox_center(bbox1)
+    #     c2 = self.compute_bbox_center(bbox2)
+    #     c1_normalized = self.normalize_center(c1,im_wh)
+    #     c2_normalized = self.normalize_center(c2,im_wh)
+    #     wh1 = self.compute_bbox_wh(bbox1)
+    #     wh2 = self.compute_bbox_wh(bbox2)
+    #     aspect_ratio1 = self.compute_aspect_ratio(wh1,take_log=True)
+    #     aspect_ratio2 = self.compute_aspect_ratio(wh2,take_log=True)
+    #     area1 = self.compute_bbox_area(wh1,im_wh,normalize=True)
+    #     area2 = self.compute_bbox_area(wh2,im_wh,normalize=True)
+    #     offset = self.compute_offset(c1,c2,wh1,normalize=False)
+    #     offset_normalized = self.compute_offset(c1,c2,wh1,normalize=True)
+    #     bbox_size_ratio = self.compute_bbox_size_ratio(wh1,wh2,take_log=True)
+    #     iou = bbox_utils.compute_iou_batch(bbox1,bbox2)
+    #     geometric_feat = np.concatenate((
+    #         offset,
+    #         offset_normalized,
+    #         bbox_size_ratio[:,np.newaxis],
+    #         iou[:,np.newaxis],
+    #         aspect_ratio1[:,np.newaxis],
+    #         aspect_ratio2[:,np.newaxis],
+    #         area1[:,np.newaxis],
+    #         area2[:,np.newaxis],
+    #         c1-im_c,
+    #         c2-im_c,
+    #         c1_normalized-0.5,
+    #         c2_normalized-0.5,
+    #         np.log2(wh1+1e-6),
+    #         np.log2(wh2+1e-6),
+    #         np.log2(im_wh+1e-6),
+    #     ),1)
+    #     return geometric_feat
+
     def compute_features(self,bbox1,bbox2,im_wh):
-        # bbox1 = copy.deepcopy(bbox1).astype(np.float32)
-        # bbox2 = copy.deepcopy(bbox2).astype(np.float32)
         im_c = self.compute_im_center(im_wh)
         c1 = self.compute_bbox_center(bbox1)
         c2 = self.compute_bbox_center(bbox2)
@@ -138,30 +174,46 @@ class GeometricFeaturesBatch():
         c2_normalized = self.normalize_center(c2,im_wh)
         wh1 = self.compute_bbox_wh(bbox1)
         wh2 = self.compute_bbox_wh(bbox2)
-        aspect_ratio1 = self.compute_aspect_ratio(wh1,take_log=True)
-        aspect_ratio2 = self.compute_aspect_ratio(wh2,take_log=True)
+        aspect_ratio1 = self.compute_aspect_ratio(wh1,take_log=False)
+        aspect_ratio2 = self.compute_aspect_ratio(wh2,take_log=False)
         area1 = self.compute_bbox_area(wh1,im_wh,normalize=True)
         area2 = self.compute_bbox_area(wh2,im_wh,normalize=True)
-        offset = self.compute_offset(c1,c2,wh1,normalize=False)
+        area1_unnorm = self.compute_bbox_area(wh1,None,normalize=False)
+        area_im = self.compute_bbox_area(im_wh,None,normalize=False)
         offset_normalized = self.compute_offset(c1,c2,wh1,normalize=True)
-        dist = self.compute_l2_norm
-        bbox_size_ratio = self.compute_bbox_size_ratio(wh1,wh2,take_log=True)
+        bbox_size_ratio = self.compute_bbox_size_ratio(wh1,wh2,take_log=False)
         iou = bbox_utils.compute_iou_batch(bbox1,bbox2)
         geometric_feat = np.concatenate((
-            offset,
             offset_normalized,
-            bbox_size_ratio[:,np.newaxis],
-            iou[:,np.newaxis],
-            aspect_ratio1[:,np.newaxis],
-            aspect_ratio2[:,np.newaxis],
-            area1[:,np.newaxis],
-            area2[:,np.newaxis],
-            c1-im_c,
-            c2-im_c,
             c1_normalized-0.5,
             c2_normalized-0.5,
-            np.log2(wh1+1e-6),
-            np.log2(wh2+1e-6),
-            np.log2(im_wh+1e-6),
-        ),1)
-        return geometric_feat
+            iou[:,np.newaxis],
+            bbox_size_ratio[:,np.newaxis],  # w2xh2 / w1xh1
+            area1_unnorm[:,np.newaxis],     # w1xh1
+            aspect_ratio1[:,np.newaxis],    # w1/h1
+            aspect_ratio2[:,np.newaxis],    # w2/h2
+            area1[:,np.newaxis],            # w1xh1 / imwximh
+            area2[:,np.newaxis],            # w2xh2 / imwximh
+            area_im[:,np.newaxis],          # imwximh
+            wh1,
+            wh2,
+            im_wh),1)
+        return geometric_feat    
+
+
+    @classmethod
+    def outer_product(cls,feat):
+        B = feat.shape[0]
+        outer_prod_feat = feat[:,:,np.newaxis] * feat[:,np.newaxis,:]
+        outer_prod_feat = np.reshape(outer_prod_feat,(B,-1))
+        return outer_prod_feat
+
+    @classmethod
+    def transform_feat(cls,feat):
+        log_feat = np.log2(feat+1e-6)
+        linear_log_feat = np.concatenate((feat,log_feat),1)
+        outer_prod_feat = cls.outer_product(linear_log_feat)
+        transformed_feat = np.concatenate((
+            linear_log_feat,
+            outer_prod_feat),1)
+        return transformed_feat
