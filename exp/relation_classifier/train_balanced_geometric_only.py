@@ -28,7 +28,7 @@ def train_model(model,dataset_train,dataset_val,exp_const):
     params = itertools.chain(
         model.geometric_factor.parameters(),
         model.gather_relation.parameters())
-    optimizer = optim.Adam(params,lr=exp_const.lr)
+    optimizer = optim.Adam(params,lr=exp_const.lr,weight_decay=0)
     
     if exp_const.focal_loss:
         criterion = losses.FocalLoss()
@@ -46,10 +46,13 @@ def train_model(model,dataset_train,dataset_val,exp_const):
             
             feats = {}
             feats['box'] = Variable(torch.cuda.FloatTensor(data['box_feat']))
-            
+            feats['object_one_hot'] = Variable(torch.cuda.FloatTensor(data['object_one_hot']))
+            feats['verb_one_hot'] = Variable(torch.cuda.FloatTensor(data['verb_one_hot']))
+
             human_prob_vec = Variable(torch.cuda.FloatTensor(data['human_prob_vec']))
             object_prob_vec = Variable(torch.cuda.FloatTensor(data['object_prob_vec']))
             hoi_labels = Variable(torch.cuda.FloatTensor(data['hoi_label_vec']))
+            prob_mask = Variable(torch.cuda.FloatTensor(data['prob_mask']))
 
             model.geometric_factor.train()
             model.gather_relation.train()
@@ -60,7 +63,7 @@ def train_model(model,dataset_train,dataset_val,exp_const):
                 geometric_logits = model.gather_relation(geometric_factor)
             relation_prob_vec = sigmoid(geometric_logits)
 
-            hoi_prob = relation_prob_vec * human_prob_vec * object_prob_vec
+            hoi_prob = relation_prob_vec * human_prob_vec * object_prob_vec * prob_mask
 
             loss = criterion(hoi_prob,hoi_labels)
 
@@ -141,10 +144,13 @@ def eval_model(model,dataset,exp_const):
         
         feats = {}
         feats['box'] = Variable(torch.cuda.FloatTensor(data['box_feat']))
+        feats['object_one_hot'] = Variable(torch.cuda.FloatTensor(data['object_one_hot']))
+        feats['verb_one_hot'] = Variable(torch.cuda.FloatTensor(data['verb_one_hot']))
         
         human_prob_vec = Variable(torch.cuda.FloatTensor(data['human_prob_vec']))
         object_prob_vec = Variable(torch.cuda.FloatTensor(data['object_prob_vec']))
         hoi_labels = Variable(torch.cuda.FloatTensor(data['hoi_label_vec']))
+        prob_mask = Variable(torch.cuda.FloatTensor(data['prob_mask']))
 
         if model.const.geometric_per_hoi:
             geometric_logits = model.geometric_factor(feats)
@@ -153,7 +159,7 @@ def eval_model(model,dataset,exp_const):
             geometric_logits = model.gather_relation(geometric_factor)
         relation_prob_vec = sigmoid(geometric_logits)
 
-        hoi_prob = relation_prob_vec * human_prob_vec * object_prob_vec
+        hoi_prob = relation_prob_vec * human_prob_vec * object_prob_vec * prob_mask
 
         loss = criterion(hoi_prob,hoi_labels)
 
