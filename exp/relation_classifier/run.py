@@ -247,10 +247,10 @@ def exp_train_balanced_geometric_only():
     if args.geometric_pairwise:
         geometric_str += '_pairwise'
      
-    exp_name = f'factors_{geometric_str}_indicator_' + \
+    exp_name = f'factors_obj_specific_quadratic_{geometric_str}_non_linear_indicator_' + \
         f'imgs_per_batch_{args.imgs_per_batch}_' + \
         f'focal_loss_{args.focal_loss}_' + \
-        f'fp_to_tp_ratio_{args.fp_to_tp_ratio}'
+        f'fp_to_tp_ratio_{args.fp_to_tp_ratio}_prob_mask'
     out_base_dir = os.path.join(
         os.getcwd(),
         'data_symlinks/hico_exp/relation_classifier')
@@ -289,6 +289,7 @@ def exp_train_balanced_geometric_only():
         model_const.geometric_factor = GeometricFactorPairwiseConstants()
     else:
         model_const.geometric_factor = GeometricFactorConstants() 
+    model_const.geometric_factor.non_linear = True
     
     model_const.geometric_per_hoi = args.geometric_per_hoi
     if model_const.geometric_per_hoi:
@@ -362,10 +363,10 @@ def exp_eval_geometric_only():
     if args.geometric_pairwise:
         geometric_str += '_pairwise'
      
-    exp_name = f'factors_{geometric_str}_indicator_' + \
+    exp_name = f'factors_obj_specific_quadratic_{geometric_str}_non_linear_indicator_' + \
         f'imgs_per_batch_{args.imgs_per_batch}_' + \
         f'focal_loss_{args.focal_loss}_' + \
-        f'fp_to_tp_ratio_{args.fp_to_tp_ratio}'
+        f'fp_to_tp_ratio_{args.fp_to_tp_ratio}_prob_mask'
 
     out_base_dir = os.path.join(
         os.getcwd(),
@@ -402,6 +403,7 @@ def exp_eval_geometric_only():
         model_const.geometric_factor = GeometricFactorPairwiseConstants()
     else:
         model_const.geometric_factor = GeometricFactorConstants() 
+    model_const.geometric_factor.non_linear = True
     
     model_const.geometric_per_hoi = args.geometric_per_hoi
     if model_const.geometric_per_hoi:
@@ -432,10 +434,10 @@ def exp_top_boxes_per_relation_geometric_only():
     if args.geometric_pairwise:
         geometric_str += '_pairwise'
      
-    exp_name = f'factors_{geometric_str}_indicator_' + \
+    exp_name = f'factors_hoi_specific_{geometric_str}_non_linear_indicator_' + \
         f'imgs_per_batch_{args.imgs_per_batch}_' + \
         f'focal_loss_{args.focal_loss}_' + \
-        f'fp_to_tp_ratio_{args.fp_to_tp_ratio}'
+        f'fp_to_tp_ratio_{args.fp_to_tp_ratio}_prob_mask'
 
     out_base_dir = os.path.join(
         os.getcwd(),
@@ -471,7 +473,8 @@ def exp_top_boxes_per_relation_geometric_only():
     if model_const.geometric_pairwise:
         model_const.geometric_factor = GeometricFactorPairwiseConstants()
     else:
-        model_const.geometric_factor = GeometricFactorConstants() 
+        model_const.geometric_factor = GeometricFactorConstants()
+    model_const.geometric_factor.non_linear = True
     
     model_const.geometric_per_hoi = args.geometric_per_hoi
     if model_const.geometric_per_hoi:
