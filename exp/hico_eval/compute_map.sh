@@ -1,8 +1,8 @@
 #!/bin/bash
 SUBSET="test"
 HICO_EXP_DIR="${PWD}/data_symlinks/hico_exp"
-EXP_NAME="relation_classifier/factors_geometric_pairwise_imgs_per_batch_1_focal_loss_False_fp_to_tp_ratio_1000"
-MODEL_NUM="5000"
+EXP_NAME="relation_classifier/factors_hoi_specific_geometric_non_linear_indicator_imgs_per_batch_1_focal_loss_False_fp_to_tp_ratio_1000_prob_mask"
+MODEL_NUM="180000"
 PRED_HOI_DETS_HDF5="${HICO_EXP_DIR}/${EXP_NAME}/pred_hoi_dets_${SUBSET}_${MODEL_NUM}.hdf5"
 OUT_DIR="${HICO_EXP_DIR}/${EXP_NAME}/mAP_eval/${SUBSET}_${MODEL_NUM}"
 PROC_DIR="${PWD}/data_symlinks/hico_processed"
