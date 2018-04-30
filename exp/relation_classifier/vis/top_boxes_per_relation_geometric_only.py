@@ -55,7 +55,9 @@ def select_best_boxes_across_dataset_using_box_score_only(
         data = dataset[sample_id]
         feats = {}
         feats['box'] = Variable(torch.cuda.FloatTensor(data['box_feat']))
-
+        feats['object_one_hot'] = Variable(torch.cuda.FloatTensor(data['object_one_hot']))
+        feats['verb_one_hot'] = Variable(torch.cuda.FloatTensor(data['verb_one_hot']))
+        
         if model.const.geometric_per_hoi:
             geometric_logits = model.geometric_factor(feats)
         else:
