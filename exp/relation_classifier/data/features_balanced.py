@@ -7,6 +7,7 @@ from torch.utils.data import Dataset
 import utils.io as io
 from utils.constants import Constants
 from data.hico.hico_constants import HicoConstants
+from exp.relation_classifier.data.geometric_features import GeometricFeaturesBatch
 
 
 class FeatureBalancedConstants(HicoConstants,io.JsonSerializableClass):
@@ -32,6 +33,8 @@ class FeaturesBalanced(Dataset):
         self.global_ids = self.load_subset_ids(self.const.subset)
         self.hoi_dict = self.get_hoi_dict(self.const.hoi_list_json)
         self.obj_to_hoi_ids = self.get_obj_to_hoi_ids(self.hoi_dict)
+        self.obj_to_id = self.get_obj_to_id(self.const.object_list_json)
+        self.verb_to_id = self.get_verb_to_id(self.const.verb_list_json)
         if self.const.box_feats_hdf5:
             self.box_feats = self.load_hdf5_file(self.const.box_feats_hdf5)
 
@@ -42,6 +45,16 @@ class FeaturesBalanced(Dataset):
         hoi_list = io.load_json_object(hoi_list_json)
         hoi_dict = {hoi['id']: hoi for hoi in hoi_list}
         return hoi_dict
+
+    def get_obj_to_id(self,object_list_json):
+        object_list = io.load_json_object(object_list_json)
+        obj_to_id = {obj['name']:obj['id'] for obj in object_list}
+        return obj_to_id
+
+    def get_verb_to_id(self,verb_list_json):
+        verb_list = io.load_json_object(verb_list_json)
+        verb_to_id = {verb['name']:verb['id'] for verb in verb_list}
+        return verb_to_id
 
     def get_obj_to_hoi_ids(self,hoi_dict):
         obj_to_hoi_ids = {}
@@ -82,9 +95,9 @@ class FeaturesBalanced(Dataset):
         object_prob_vecs = np.zeros([num_cand,num_hois])
         for i,hoi_id in enumerate(hoi_ids):
             obj = self.hoi_dict[hoi_id]['object']
-            other_hoi_ids = self.obj_to_hoi_ids[obj]
-            for other_hoi_id in other_hoi_ids:
-                object_prob_vecs[i,int(other_hoi_id)-1] = object_probs[i]
+            obj_hoi_ids = self.obj_to_hoi_ids[obj]
+            for obj_hoi_id in obj_hoi_ids:
+                object_prob_vecs[i,int(obj_hoi_id)-1] = object_probs[i]
         return human_prob_vecs, object_prob_vecs
 
     def sample_cands(self,hoi_labels):
@@ -101,6 +114,30 @@ class FeaturesBalanced(Dataset):
         sampled_fp_ids = np.random.permutation(fp_ids)[:num_fp_to_sample]
         sampled_ids = np.concatenate((tp_ids,sampled_fp_ids),0)
         return sampled_ids
+
+    def get_obj_one_hot(self,hoi_ids):
+        num_cand = len(hoi_ids)
+        obj_one_hot = np.zeros([num_cand,len(self.obj_to_id)])
+        for i, hoi_id in enumerate(hoi_ids):
+            obj_id = self.obj_to_id[self.hoi_dict[hoi_id]['object']]
+            obj_idx = int(obj_id)-1
+            obj_one_hot[i,obj_idx] = 1.0
+        return obj_one_hot
+
+    def get_verb_one_hot(self,hoi_ids):
+        num_cand = len(hoi_ids)
+        verb_one_hot = np.zeros([num_cand,len(self.verb_to_id)])
+        for i, hoi_id in enumerate(hoi_ids):
+            verb_id = self.verb_to_id[self.hoi_dict[hoi_id]['verb']]
+            verb_idx = int(verb_id)-1
+            verb_one_hot[i,verb_idx] = 1.0
+        return verb_one_hot
+
+    def get_prob_mask(self,hoi_idx):
+        num_cand = len(hoi_idx)
+        prob_mask = np.zeros([num_cand,len(self.hoi_dict)])
+        prob_mask[np.arange(num_cand),hoi_idx] = 1.0
+        return prob_mask
 
     def __getitem__(self,i):
         global_id = self.global_ids[i]
@@ -161,6 +198,9 @@ class FeaturesBalanced(Dataset):
             to_return['object_prob'])
         to_return['human_prob_vec'] = human_prob_vecs
         to_return['object_prob_vec'] = object_prob_vecs
+        to_return['object_one_hot'] = self.get_obj_one_hot(to_return['hoi_id'])
+        to_return['verb_one_hot'] = self.get_verb_one_hot(to_return['hoi_id'])
+        to_return['prob_mask'] = self.get_prob_mask(to_return['hoi_idx'])
         return to_return
         
 
