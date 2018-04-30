@@ -19,7 +19,6 @@ def compute_geometric_feats(human_boxes,object_boxes,img_size):
         human_boxes,
         object_boxes,
         im_wh)
-    feat_extractor = GeometricFeatures()
     return feats
 
 
