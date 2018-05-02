@@ -23,7 +23,7 @@ def manage_required_args(
         for specified_arg in sorted(all_specified_args):
             value = getattr(args,specified_arg)
             option_str = f'--{specified_arg}'
-            print(f'{option_str.ljust(30)}{value}')
+            print(f'{option_str.ljust(50)}{value}')
 
     if len(not_specified_args) > 0:
         print('-'*80)
@@ -32,12 +32,12 @@ def manage_required_args(
         for required_arg in not_specified_args:
             option_string = f'--{required_arg}'
             help_str = parser._option_string_actions[option_string].help
-            print_str = f'{option_string.ljust(30)}{help_str}'
+            print_str = f'{option_string.ljust(50)}{help_str}'
             print(print_str)
             choices = parser._option_string_actions[option_string].choices
             if choices is not None:
                 choices_str = ' / '.join(choices)
-                whitespace = ' '*30
+                whitespace = ' '*50
                 choices_str = f'{whitespace}Choices:    {choices_str}'
                 print(choices_str)
 
