@@ -31,8 +31,12 @@ class HicoConstants(io.JsonSerializableClass):
         self.object_list_json = os.path.join(self.proc_dir,'object_list.json')
         self.verb_list_json = os.path.join(self.proc_dir,'verb_list.json')
 
-        # Split ids
+        # Need to run split_ids.py
         self.split_ids_json = os.path.join(self.proc_dir,'split_ids.json')
+
+        # Need to run hoi_cls_count.py
+        self.hoi_cls_count_json = os.path.join(self.proc_dir,'hoi_cls_count.json')
+        self.bin_to_hoi_ids_json = os.path.join(self.proc_dir,'bin_to_hoi_ids.json')
 
 
 class HicoBoxesConstants(HicoConstants):
