@@ -59,6 +59,9 @@ class BoxFeatures():
         return im_wh/2
 
     def compute_features(self,bbox1,bbox2,im_wh):
+        B = im_wh.shape[0]
+        typical_wh = np.array([[640.,480.]])
+        typical_wh = np.tile(typical_wh,(B,1))
         im_c = self.compute_im_center(im_wh)
         c1 = self.compute_bbox_center(bbox1)
         c2 = self.compute_bbox_center(bbox2)
@@ -70,9 +73,9 @@ class BoxFeatures():
         aspect_ratio2 = self.compute_aspect_ratio(wh2,take_log=False)
         area1 = self.compute_bbox_area(wh1,im_wh,normalize=True)
         area2 = self.compute_bbox_area(wh2,im_wh,normalize=True)
-        area1_unnorm = self.compute_bbox_area(wh1,None,normalize=False)
-        area2_unnorm = self.compute_bbox_area(wh2,None,normalize=False)
-        area_im = self.compute_bbox_area(im_wh,None,normalize=False)
+        area1_unnorm = self.compute_bbox_area(wh1,typical_wh,normalize=True)
+        area2_unnorm = self.compute_bbox_area(wh2,typical_wh,normalize=True)
+        area_im = self.compute_bbox_area(im_wh,typical_wh,normalize=True)
         offset_normalized = self.compute_offset(c1,c2,wh1,normalize=True)
         bbox_size_ratio = self.compute_bbox_size_ratio(wh1,wh2,take_log=False)
         iou = bbox_utils.compute_iou_batch(bbox1,bbox2)
@@ -89,7 +92,7 @@ class BoxFeatures():
             area1[:,np.newaxis],            # w1xh1 / imwximh
             area2[:,np.newaxis],            # w2xh2 / imwximh
             area_im[:,np.newaxis],          # imwximh
-            wh1,
-            wh2,
-            im_wh),1)
+            wh1/typical_wh,
+            wh2/typical_wh,
+            im_wh/typical_wh),1)
         return box_feat
