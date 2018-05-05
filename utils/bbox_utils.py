@@ -29,7 +29,7 @@ def compute_area(bbox,invalid=None):
     return area
 
 
-def compute_iou(bbox1,bbox2):
+def compute_iou(bbox1,bbox2,verbose=False):
     x1,y1,x2,y2 = bbox1
     x1_,y1_,x2_,y2_ = bbox2
     
@@ -44,6 +44,9 @@ def compute_iou(bbox1,bbox2):
     union = area1 + area2 - intersection
     iou = intersection / (union + 1e-6)
 
+    if verbose:
+        return iou, intersection, union
+
     return iou 
 
 
@@ -56,7 +59,7 @@ def compute_area_batch(bbox):
     return area
 
 
-def compute_iou_batch(bbox1,bbox2):
+def compute_iou_batch(bbox1,bbox2,verbose=False):
     x1,y1,x2,y2 = [bbox1[:,i] for i in range(4)]
     x1_,y1_,x2_,y2_ = [bbox2[:,i] for i in range(4)]
     
@@ -72,6 +75,9 @@ def compute_iou_batch(bbox1,bbox2):
     area2 = compute_area_batch(bbox2)
     union = area1 + area2 - intersection
     iou = intersection / (union + 1e-6)
+    
+    if verbose:
+        return iou, intersection, union
 
     return iou 
     
