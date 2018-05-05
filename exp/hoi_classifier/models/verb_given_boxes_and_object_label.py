@@ -37,7 +37,7 @@ class VerbGivenBoxesAndObjectLabel(nn.Module,io.WritableToFile):
         self.mlp = pytorch_layers.create_mlp(self.const.mlp_const)
 
     def transform_feat(self,feat):
-        log_feat = torch.log(feat+1e-6)
+        log_feat = torch.log(torch.abs(feat)+1e-6)
         transformed_feat = torch.cat((feat,log_feat),1) 
         return transformed_feat
 
