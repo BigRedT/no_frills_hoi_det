@@ -7,6 +7,7 @@ from torch.utils.data import Dataset
 import utils.io as io
 from utils.constants import Constants
 from data.hico.hico_constants import HicoConstants
+from exp.hoi_classifier.data.pose_features import PoseFeatures
 
 
 class FeatureConstants(HicoConstants,io.JsonSerializableClass):
@@ -16,6 +17,9 @@ class FeatureConstants(HicoConstants,io.JsonSerializableClass):
         self.hoi_cand_labels_hdf5 = None
         self.faster_rcnn_feats_hdf5 = None
         self.box_feats_hdf5 = None
+        self.human_cand_pose_hdf5 = None
+        self.human_pose_feats_hdf5 = None
+        self.num_pose_keypoints = 18
         self.balanced_sampling = True
         self.fp_to_tp_ratio = 1000
         self.subset = 'train'
@@ -34,8 +38,22 @@ class Features(Dataset):
         self.obj_to_hoi_ids = self.get_obj_to_hoi_ids(self.hoi_dict)
         self.obj_to_id = self.get_obj_to_id(self.const.object_list_json)
         self.verb_to_id = self.get_verb_to_id(self.const.verb_list_json)
+        self.anno_dict = self.get_anno_dict(self.const.anno_list_json)
         if self.const.box_feats_hdf5:
             self.box_feats = self.load_hdf5_file(self.const.box_feats_hdf5)
+        if self.const.human_cand_pose_hdf5:
+            self.human_cand_pose = self.load_hdf5_file(
+                self.const.human_cand_pose_hdf5)
+            self.pose_feat_computer = PoseFeatures(
+                num_keypts=self.const.num_pose_keypoints)
+        if self.const.human_pose_feats_hdf5:
+            self.human_pose_feat = self.load_hdf5_file(
+                self.const.human_pose_feats_hdf5)
+
+    def get_anno_dict(self,anno_list_json):
+        anno_list = io.load_json_object(anno_list_json)
+        anno_dict = {anno['global_id']:anno for anno in anno_list}
+        return anno_dict
 
     def load_hdf5_file(self,hdf5_filename,mode='r'):
         return h5py.File(hdf5_filename,mode)
@@ -137,6 +155,20 @@ class Features(Dataset):
         prob_mask = np.zeros([num_cand,len(self.hoi_dict)])
         prob_mask[np.arange(num_cand),hoi_idx] = 1.0
         return prob_mask
+    
+    def get_rpn_id_to_pose(self,global_id):
+        rpn_id_to_pose = {}
+        rpn_id_to_pose_ = self.human_cand_pose[global_id]
+        for hoi_id in rpn_id_to_pose_.keys():
+            rpn_id_to_pose[hoi_id] = rpn_id_to_pose_[hoi_id][()]
+        return rpn_id_to_pose
+
+    def get_im_wh(self,global_id,num_cand):
+        h,w = self.anno_dict[global_id]['image_size'][:2]
+        im_wh = np.ones([num_cand,2],dtype=np.float32)
+        im_wh[:,0] = im_wh[:,0]*w
+        im_wh[:,1] = im_wh[:,1]*h
+        return im_wh
 
     def __getitem__(self,i):
         global_id = self.global_ids[i]
@@ -148,6 +180,13 @@ class Features(Dataset):
             box_feats_ =  self.box_feats[global_id][()]
         else:
             box_feats_ = None
+    
+        if self.const.human_pose_feats_hdf5:
+            absolute_pose_feat_ = self.human_pose_feat[global_id]['absolute_pose'][()]
+            relative_pose_feat_ = self.human_pose_feat[global_id]['relative_pose'][()]
+        else:
+            absolute_pose_feat_ = None
+            relative_pose_feat_ = None
 
         if self.const.balanced_sampling:
             cand_ids = self.sample_cands(hoi_labels_)
@@ -159,12 +198,17 @@ class Features(Dataset):
                 box_feats = box_feats_[cand_ids]
             else:
                 box_feats = None
+            if absolute_pose_feat_ is not None:
+                absolute_pose_feat = absolute_pose_feat_[cand_ids]
+                relative_pose_feat = relative_pose_feat_[cand_ids]
         else:
             hoi_cands = hoi_cands_
             hoi_ids = hoi_ids_
             hoi_labels = hoi_labels_
             hoi_label_vecs = hoi_label_vecs_
             box_feats = box_feats_
+            absolute_pose_feat = absolute_pose_feat_
+            relative_pose_feat = relative_pose_feat_
         
         to_return = {
             'global_id': global_id,
@@ -179,6 +223,8 @@ class Features(Dataset):
             'hoi_label': hoi_labels,
             'hoi_label_vec': hoi_label_vecs,
             'box_feat': box_feats,
+            'absolute_pose': absolute_pose_feat,
+            'relative_pose': relative_pose_feat,
             'hoi_cands_': hoi_cands_,
             'start_end_ids_': start_end_ids.astype(np.int), # Corresponds to non sampled hoi_cands_ which is the same as hoi_cands when balanced sampling is not used
         }
@@ -191,6 +237,18 @@ class Features(Dataset):
             self.faster_rcnn_feats[global_id],
             to_return['object_rpn_id'],
             axis=0)
+        # if self.const.human_cand_pose_hdf5:
+        #     to_return['absolute_pose'] = absolute_pose_feat
+        #     to_return['relative_pose'] = relative_pose_feat
+            # pose_feats = self.pose_feat_computer.compute_pose_feats(
+            #     to_return['human_box'],
+            #     to_return['object_box'],
+            #     to_return['human_rpn_id'],
+            #     self.get_rpn_id_to_pose(to_return['global_id']),
+            #     self.get_im_wh(to_return['global_id'],to_return['human_box'].shape[0]))
+            # to_return['absolute_pose'] = pose_feats['absolute_pose']
+            # to_return['relative_pose'] = pose_feats['relative_pose']
+
         human_prob_vecs, object_prob_vecs = self.get_faster_rcnn_prob_vecs(
             to_return['hoi_id'], 
             to_return['human_prob'],
