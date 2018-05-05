@@ -11,8 +11,11 @@ import exp.hoi_classifier.train as train
 import exp.hoi_classifier.eval as evaluate
 from exp.hoi_classifier.data.features_dataset import FeatureConstants
 import exp.hoi_classifier.data.cache_box_features as cache_box_features
-# import exp.relation_classifier.vis.top_boxes_per_relation as \
-#     vis_top_boxes_per_relation
+import exp.hoi_classifier.data.cache_pose_features as cache_pose_features
+import exp.hoi_classifier.data.assign_pose_to_human_candidates as \
+    assign_pose_to_human_candidates
+import exp.hoi_classifier.vis.top_boxes_per_hoi as \
+    vis_top_boxes_per_hoi
 
 parser.add_argument(
     '--gen_hoi_cand',
@@ -53,6 +56,11 @@ parser.add_argument(
     default=False,
     action='store_true',
     help='Use verb_given_boxes_and_object_label factor')
+parser.add_argument(
+    '--verb_given_human_pose',
+    default=False,
+    action='store_true',
+    help='Use verb_given_human_pose factor')
 parser.add_argument(
     '--rcnn_det_prob',
     default=False,
@@ -115,6 +123,54 @@ def exp_cache_box_feats():
     cache_box_features.main(exp_const,data_const)
 
 
+def exp_assign_pose_to_human_cand():
+    args = parser.parse_args()
+    
+    not_specified_args = manage_required_args(
+        args,
+        parser,
+        required_args=['subset'])
+    
+    exp_name = 'hoi_candidates'
+    exp_const = ExpConstants(exp_name=exp_name)
+    exp_const.subset = args.subset
+
+    data_const = HicoConstants()
+    data_const.hoi_cand_hdf5 = os.path.join(
+        exp_const.exp_dir,
+        f'hoi_candidates_{exp_const.subset}.hdf5')
+    data_const.human_pose_dir = os.path.join(
+        data_const.proc_dir,
+        'human_pose')
+    data_const.num_keypoints = 18
+
+    assign_pose_to_human_candidates.main(exp_const,data_const)
+
+
+def exp_cache_pose_feats():
+    args = parser.parse_args()
+    
+    not_specified_args = manage_required_args(
+        args,
+        parser,
+        required_args=['subset'])
+    
+    exp_name = 'hoi_candidates'
+    exp_const = ExpConstants(exp_name=exp_name)
+    exp_const.subset = args.subset
+
+    data_const = HicoConstants()
+    data_const.hoi_cand_hdf5 = os.path.join(
+        exp_const.exp_dir,
+        f'hoi_candidates_{exp_const.subset}.hdf5')
+    data_const.human_cands_pose_hdf5 = os.path.join(
+        exp_const.exp_dir,
+        f'human_candidates_pose_{exp_const.subset}.hdf5')
+    data_const.num_keypoints = 18
+
+    cache_pose_features.main(exp_const,data_const)
+
+
 def exp_train():
     args = parser.parse_args()
     not_specified_args = manage_required_args(
@@ -124,6 +180,7 @@ def exp_train():
         optional_args=[
             'verb_given_appearance',
             'verb_given_boxes_and_object_label',
+            'verb_given_human_pose',
             'rcnn_det_prob'])
 
     exp_name = 'factors'
@@ -133,6 +190,8 @@ def exp_train():
         exp_name += '_appearance'
     if args.verb_given_boxes_and_object_label:
         exp_name += '_boxes_and_object_label'
+    if args.verb_given_human_pose:
+        exp_name += '_human_pose'
     
     out_base_dir = os.path.join(
         os.getcwd(),
@@ -159,6 +218,12 @@ def exp_train():
     data_const.hoi_cand_labels_hdf5 = os.path.join(
         hoi_cand_dir,
         'hoi_candidate_labels_train_val.hdf5')
+    # data_const.human_cand_pose_hdf5 = os.path.join(
+    #     hoi_cand_dir,
+    #     'human_candidates_pose_train_val.hdf5')
+    data_const.human_pose_feats_hdf5 = os.path.join(
+        hoi_cand_dir,
+        'human_pose_feats_train_val.hdf5')
     data_const.faster_rcnn_feats_hdf5 = os.path.join(
         data_const.proc_dir,
         'faster_rcnn_fc7.hdf5')
@@ -169,6 +234,7 @@ def exp_train():
     model_const.hoi_classifier = HoiClassifierConstants()
     model_const.hoi_classifier.verb_given_appearance = args.verb_given_appearance
     model_const.hoi_classifier.verb_given_boxes_and_object_label = args.verb_given_boxes_and_object_label
+    model_const.hoi_classifier.verb_given_human_pose = args.verb_given_human_pose
     model_const.hoi_classifier.rcnn_det_prob = args.rcnn_det_prob
 
     train.main(exp_const,data_const,model_const)
@@ -183,6 +249,7 @@ def exp_eval():
         optional_args=[
             'verb_given_appearance',
             'verb_given_boxes_and_object_label',
+            'verb_given_human_pose',
             'rcnn_det_prob'])
 
     exp_name = 'factors'
@@ -192,6 +259,8 @@ def exp_eval():
         exp_name += '_appearance'
     if args.verb_given_boxes_and_object_label:
         exp_name += '_boxes_and_object_label'
+    if args.verb_given_human_pose:
+        exp_name += '_human_pose'
 
     out_base_dir = os.path.join(
         os.getcwd(),
@@ -214,6 +283,9 @@ def exp_eval():
     data_const.hoi_cand_labels_hdf5 = os.path.join(
         hoi_cand_dir,
         'hoi_candidate_labels_test.hdf5')
+    data_const.human_pose_feats_hdf5 = os.path.join(
+        hoi_cand_dir,
+        'human_pose_feats_test.hdf5')
     data_const.faster_rcnn_feats_hdf5 = os.path.join(
         data_const.proc_dir,
         'faster_rcnn_fc7.hdf5')
@@ -225,6 +297,7 @@ def exp_eval():
     model_const.hoi_classifier = HoiClassifierConstants()
     model_const.hoi_classifier.verb_given_appearance = args.verb_given_appearance
     model_const.hoi_classifier.verb_given_boxes_and_object_label = args.verb_given_boxes_and_object_label
+    model_const.hoi_classifier.verb_given_human_pose = args.verb_given_human_pose
     model_const.hoi_classifier.rcnn_det_prob = args.rcnn_det_prob
     model_const.hoi_classifier.model_pth = os.path.join(
         exp_const.model_dir,
@@ -232,17 +305,34 @@ def exp_eval():
     evaluate.main(exp_const,data_const,model_const)
 
 
-def exp_top_boxes_per_relation():
-    exp_name = 'factors_rcnn_feats_scores_imgs_per_batch_1_focal_loss_False_fp_to_tp_ratio_1000_box_aware_model_True_box_prob'
+def exp_top_boxes_per_hoi():
+    args = parser.parse_args()
+    not_specified_args = manage_required_args(
+        args,
+        parser,
+        required_args=['model_num'],
+        optional_args=[
+            'verb_given_appearance',
+            'verb_given_boxes_and_object_label',
+            'rcnn_det_prob'])
+
+    exp_name = 'factors'
+    if args.rcnn_det_prob:
+        exp_name += '_rcnn_det_prob'
+    if args.verb_given_appearance:
+        exp_name += '_appearance'
+    if args.verb_given_boxes_and_object_label:
+        exp_name += '_boxes_and_object_label'
+     
     out_base_dir = os.path.join(
         os.getcwd(),
-        'data_symlinks/hico_exp/relation_classifier')
+        'data_symlinks/hico_exp/hoi_classifier')
     exp_const = ExpConstants(
         exp_name=exp_name,
         out_base_dir=out_base_dir)
     exp_const.model_dir = os.path.join(exp_const.exp_dir,'models')
 
-    data_const = FeatureBalancedConstants()
+    data_const = FeatureConstants()
     hoi_cand_dir = os.path.join(
         os.getcwd(),
         'data_symlinks/hico_exp/hoi_candidates')
@@ -251,7 +341,7 @@ def exp_top_boxes_per_relation():
         'hoi_candidates_train_val.hdf5')
     data_const.box_feats_hdf5 = os.path.join(
         hoi_cand_dir,
-        'hoi_candidates_geometric_feats_train_val.hdf5')
+        'hoi_candidates_box_feats_train_val.hdf5')
     data_const.hoi_cand_labels_hdf5 = os.path.join(
         hoi_cand_dir,
         'hoi_candidate_labels_train_val.hdf5')
@@ -262,16 +352,16 @@ def exp_top_boxes_per_relation():
     data_const.subset = 'val' 
     
     model_const = Constants()
-    model_const.model_num = 60000
-    model_const.relation_classifier = BoxAwareRelationClassifierConstants()
-    model_const.gather_relation = GatherRelationConstants()
-    model_const.gather_relation.hoi_list_json = data_const.hoi_list_json
-    model_const.gather_relation.verb_list_json = data_const.verb_list_json
-    model_const.relation_classifier.model_pth = os.path.join(
+    model_const.model_num = args.model_num
+    model_const.hoi_classifier = HoiClassifierConstants()
+    model_const.hoi_classifier.verb_given_appearance = args.verb_given_appearance
+    model_const.hoi_classifier.verb_given_boxes_and_object_label = args.verb_given_boxes_and_object_label
+    model_const.hoi_classifier.rcnn_det_prob = args.rcnn_det_prob
+    model_const.hoi_classifier.model_pth = os.path.join(
         exp_const.model_dir,
-        f'relation_classifier_{model_const.model_num}')
+        f'hoi_classifier_{model_const.model_num}')
 
-    vis_top_boxes_per_relation.main(exp_const,data_const,model_const)
+    vis_top_boxes_per_hoi.main(exp_const,data_const,model_const)
 
 
 if __name__=='__main__':
