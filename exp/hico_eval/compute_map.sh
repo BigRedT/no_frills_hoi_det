@@ -1,8 +1,8 @@
 #!/bin/bash
 SUBSET="test"
 HICO_EXP_DIR="${PWD}/data_symlinks/hico_exp"
-EXP_NAME="hoi_classifier/factors_rcnn_det_prob_appearance_boxes_and_object_label"
-MODEL_NUM="55000"
+EXP_NAME="hoi_classifier/factors_rcnn_det_prob_human_pose"
+MODEL_NUM="50000"
 PRED_HOI_DETS_HDF5="${HICO_EXP_DIR}/${EXP_NAME}/pred_hoi_dets_${SUBSET}_${MODEL_NUM}.hdf5"
 OUT_DIR="${HICO_EXP_DIR}/${EXP_NAME}/mAP_eval/${SUBSET}_${MODEL_NUM}"
 PROC_DIR="${PWD}/data_symlinks/hico_processed"
