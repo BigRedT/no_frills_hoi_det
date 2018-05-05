@@ -33,6 +33,8 @@ def eval_model(model,dataset,exp_const):
             'human_rcnn': Variable(torch.cuda.FloatTensor(data['human_feat'])),
             'object_rcnn': Variable(torch.cuda.FloatTensor(data['object_feat'])),
             'box': Variable(torch.cuda.FloatTensor(data['box_feat'])),
+            'absolute_pose': Variable(torch.cuda.FloatTensor(data['absolute_pose'])),
+            'relative_pose': Variable(torch.cuda.FloatTensor(data['relative_pose'])),
             'human_prob_vec': Variable(torch.cuda.FloatTensor(data['human_prob_vec'])),
             'object_prob_vec': Variable(torch.cuda.FloatTensor(data['object_prob_vec'])),
             'object_one_hot': Variable(torch.cuda.FloatTensor(data['object_one_hot'])),
