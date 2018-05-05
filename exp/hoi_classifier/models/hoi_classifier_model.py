@@ -11,21 +11,25 @@ from exp.hoi_classifier.models.verb_given_human_appearance import \
     VerbGivenHumanAppearanceConstants, VerbGivenHumanAppearance    
 from exp.hoi_classifier.models.verb_given_boxes_and_object_label import \
     VerbGivenBoxesAndObjectLabelConstants, VerbGivenBoxesAndObjectLabel
+from exp.hoi_classifier.models.verb_given_human_pose import \
+    VerbGivenHumanPoseConstants, VerbGivenHumanPose
 from exp.hoi_classifier.models.scatter_verbs_to_hois import \
     ScatterVerbsToHoisConstants, ScatterVerbsToHois
 
 
 class HoiClassifierConstants(io.JsonSerializableClass):
     FACTOR_NAME_TO_MODULE_CONSTANTS = {
-        'verb_given_object_app': VerbGivenObjectAppearanceConstants,
-        'verb_given_human_app': VerbGivenHumanAppearanceConstants,
-        'verb_given_boxes_and_object_label': VerbGivenBoxesAndObjectLabelConstants,
+        'verb_given_object_app': VerbGivenObjectAppearanceConstants(),
+        'verb_given_human_app': VerbGivenHumanAppearanceConstants(),
+        'verb_given_boxes_and_object_label': VerbGivenBoxesAndObjectLabelConstants(),
+        'verb_given_human_pose': VerbGivenHumanPoseConstants()
     }
 
     def __init__(self):
         super(HoiClassifierConstants,self).__init__()
         self.verb_given_appearance = True
         self.verb_given_boxes_and_object_label = True
+        self.verb_given_human_pose = True
         self.rcnn_det_prob = True
         self.scatter_verbs_to_hois = ScatterVerbsToHoisConstants()
 
@@ -33,8 +37,8 @@ class HoiClassifierConstants(io.JsonSerializableClass):
     def selected_factor_constants(self):
         factor_constants = {}
         for factor_name in self.selected_factor_names:
-            Const = self.FACTOR_NAME_TO_MODULE_CONSTANTS[factor_name]
-            factor_constants[factor_name] = Const()
+            const = self.FACTOR_NAME_TO_MODULE_CONSTANTS[factor_name]
+            factor_constants[factor_name] = const
         return factor_constants
 
     @property
@@ -45,6 +49,8 @@ class HoiClassifierConstants(io.JsonSerializableClass):
             factor_names.append('verb_given_human_app')
         if self.verb_given_boxes_and_object_label:
             factor_names.append('verb_given_boxes_and_object_label')
+        if self.verb_given_human_pose:
+            factor_names.append('verb_given_human_pose')
         return factor_names
 
 
@@ -53,6 +59,7 @@ class HoiClassifier(nn.Module,io.WritableToFile):
         'verb_given_object_app': VerbGivenObjectAppearance,
         'verb_given_human_app': VerbGivenHumanAppearance,
         'verb_given_boxes_and_object_label': VerbGivenBoxesAndObjectLabel,
+        'verb_given_human_pose': VerbGivenHumanPose
     }
 
     def __init__(self,const):
@@ -89,8 +96,8 @@ class HoiClassifier(nn.Module,io.WritableToFile):
             human_prob_vec = feats['human_prob_vec']
             object_prob_vec = feats['object_prob_vec']
         else:
-            human_prob_vec = 0*human_prob_vec + 1
-            object_prob_vec = 0*object_prob_vec + 1
+            human_prob_vec = 0*feats['human_prob_vec'] + 1
+            object_prob_vec = 0*feats['object_prob_vec'] + 1
 
         prob_vec = {
             'human': human_prob_vec,
