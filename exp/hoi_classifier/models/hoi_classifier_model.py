@@ -28,6 +28,8 @@ class HoiClassifierConstants(io.JsonSerializableClass):
     def __init__(self):
         super(HoiClassifierConstants,self).__init__()
         self.verb_given_appearance = True
+        self.verb_given_human_appearance = True
+        self.verb_given_object_appearance = True
         self.verb_given_boxes_and_object_label = True
         self.verb_given_human_pose = True
         self.rcnn_det_prob = True
@@ -47,10 +49,17 @@ class HoiClassifierConstants(io.JsonSerializableClass):
         if self.verb_given_appearance:
             factor_names.append('verb_given_object_app')
             factor_names.append('verb_given_human_app')
+        elif self.verb_given_human_appearance:
+            factor_names.append('verb_given_human_app')
+        elif self.verb_given_object_appearance:
+            factor_names.append('verb_given_object_app')
+
         if self.verb_given_boxes_and_object_label:
             factor_names.append('verb_given_boxes_and_object_label')
+        
         if self.verb_given_human_pose:
             factor_names.append('verb_given_human_pose')
+        
         return factor_names
 
 

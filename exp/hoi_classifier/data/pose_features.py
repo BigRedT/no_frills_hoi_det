@@ -28,28 +28,29 @@ class PoseFeatures():
     def compute_bbox_wh(self,bbox):
         num_boxes = bbox.shape[0]
         wh = np.zeros([num_boxes,2])
-        wh[:,0] = 0.5*(bbox[:,2]-bbox[:,0])
-        wh[:,1] = 0.5*(bbox[:,3]-bbox[:,1])
+        wh[:,0] = (bbox[:,2]-bbox[:,0])
+        wh[:,1] = (bbox[:,3]-bbox[:,1])
         return wh
     
     def encode_pose(self,keypts,human_box):
         wh = self.compute_bbox_wh(human_box) # Bx2
         wh = np.tile(wh[:,np.newaxis,:],(1,self.num_keypts,1)) # Bx18x2
         xy = np.tile(human_box[:,np.newaxis,:2],(1,self.num_keypts,1))  # Bx18x2
-        pose = keypts[:,:,:]    # Bx18x3
+        pose = copy.deepcopy(keypts)    # Bx18x3
         pose[:,:,:2] = (pose[:,:,:2] - xy)/(wh+1e-6)
         return pose
 
     def encode_relative_pose(self,keypts,object_box,im_wh):
-        keypts[:,:,:2] = keypts[:,:,:2] / im_wh
+        keypts_ = copy.deepcopy(keypts)
+        keypts_[:,:,:2] = keypts_[:,:,:2] / im_wh
         x1y1 = object_box[:,:2]
         x1y1 = np.tile(x1y1[:,np.newaxis,:],(1,self.num_keypts,1))
         x1y1 = x1y1 / im_wh
         x2y2 = object_box[:,2:4] 
         x2y2 = np.tile(x2y2[:,np.newaxis,:],(1,self.num_keypts,1))
         x2y2 = x2y2 / im_wh
-        x1y1_wrt_keypts = x1y1 - keypts[:,:,:2] # Bx18x2
-        x2y2_wrt_keypts = x2y2 - keypts[:,:,:2] # Bx18x2
+        x1y1_wrt_keypts = x1y1 - keypts_[:,:,:2] # Bx18x2
+        x2y2_wrt_keypts = x2y2 - keypts_[:,:,:2] # Bx18x2
         return x1y1_wrt_keypts, x2y2_wrt_keypts
 
     def compute_pose_feats(
@@ -79,17 +80,6 @@ class PoseFeatures():
             'absolute_pose': absolute_pose,   # Bx54
             'relative_pose': relative_pose, # Bx90 (18*2 + 18*2 + 18)
         }
-        
         return feats
-
-    # def compute_pose_feats_gpu(
-    #         self,
-    #         human_bbox,
-    #         object_bbox,
-    #         rpn_ids,
-    #         rpn_id_to_pose,
-    #         im_wh):
-    #     B = human_bbox.shape[0]
-
 
         

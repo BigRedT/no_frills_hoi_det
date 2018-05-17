@@ -5,11 +5,13 @@ code to read the same information from hdf5 file. Format in which the data is
 stored in the hdf5 is described in exp/detect_coco_objects/data_description.md
 """
 import os
+import h5py
 import numpy as np
 from tqdm import tqdm
 
 import utils.io as io
 from utils.bbox_utils import compute_iou, compute_area
+from data.coco_classes import COCO_CLASSES
 
 
 def box_recall(gt_hois,human_boxes,object_boxes,iou_thresh):
@@ -200,6 +202,11 @@ def evaluate_boxes(exp_const,data_const):
         f'object_thresh_{exp_const.object_score_thresh}_' + \
         f'max_{exp_const.max_objects_per_class}')
 
+    select_boxes_h5py = os.path.join(
+        select_boxes_dir,
+        'selected_coco_cls_dets.hdf5')
+    select_boxes = h5py.File(select_boxes_h5py)
+
     print('Loading anno_list.json ...')
     anno_list = io.load_json_object(data_const.anno_list_json)
 
@@ -221,14 +228,21 @@ def evaluate_boxes(exp_const,data_const):
     for anno in tqdm(anno_list):
         global_id = anno['global_id']
         if 'test' in global_id:
-            continue
-        else:
             num_images += 1
+        else:
+            continue
 
-        selected_dets_npy = os.path.join(
-            select_boxes_dir,
-            f'{global_id}_selected_dets.npy')
-        selected_dets = np.load(selected_dets_npy)[()]
+        # selected_dets_npy = os.path.join(
+        #     select_boxes_dir,
+        #     f'{global_id}_selected_dets.npy')
+        # selected_dets = np.load(selected_dets_npy)[()]
+
+        boxes_scores_rpn_ids = select_boxes[global_id]['boxes_scores_rpn_ids'][()]
+        start_end_ids = select_boxes[global_id]['start_end_ids'][()]
+        selected_dets = {'boxes':{}}
+        for cls_ind,cls_name in enumerate(COCO_CLASSES):
+            start_id, end_id = start_end_ids[cls_ind]
+            selected_dets['boxes'][cls_name] = boxes_scores_rpn_ids[start_id:end_id,:4]
 
         human_boxes = selected_dets['boxes']['person']
 
@@ -294,6 +308,11 @@ def evaluate_boxes_and_labels(exp_const,data_const):
         f'object_thresh_{exp_const.object_score_thresh}_' + \
         f'max_{exp_const.max_objects_per_class}')
 
+    select_boxes_h5py = os.path.join(
+        select_boxes_dir,
+        'selected_coco_cls_dets.hdf5')
+    select_boxes = h5py.File(select_boxes_h5py)
+
     print('Loading anno_list.json ...')
     anno_list = io.load_json_object(data_const.anno_list_json)
 
@@ -318,15 +337,23 @@ def evaluate_boxes_and_labels(exp_const,data_const):
     for anno in tqdm(anno_list):
         global_id = anno['global_id']
         if 'test' in global_id:
-            continue
-        else:
             num_images += 1
+        else:
+            continue
+            #num_images += 1
 
-        selected_dets_npy = os.path.join(
-            select_boxes_dir,
-            f'{global_id}_selected_dets.npy')
-        selected_dets = np.load(selected_dets_npy)[()]
+        # selected_dets_npy = os.path.join(
+        #     select_boxes_dir,
+        #     f'{global_id}_selected_dets.npy')
+        # selected_dets = np.load(selected_dets_npy)[()]
 
+        boxes_scores_rpn_ids = select_boxes[global_id]['boxes_scores_rpn_ids'][()]
+        start_end_ids = select_boxes[global_id]['start_end_ids'][()]
+        selected_dets = {'boxes':{}}
+        for cls_ind,cls_name in enumerate(COCO_CLASSES):
+            start_id, end_id = start_end_ids[cls_ind]
+            selected_dets['boxes'][cls_name] = boxes_scores_rpn_ids[start_id:end_id,:4]
+        
         human_boxes = selected_dets['boxes']['person']
 
         object_boxes = []

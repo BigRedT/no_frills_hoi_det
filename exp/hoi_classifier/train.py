@@ -44,6 +44,7 @@ def train_model(model,dataset_train,dataset_val,exp_const):
                 'object_one_hot': Variable(torch.cuda.FloatTensor(data['object_one_hot'])),
                 'prob_mask': Variable(torch.cuda.FloatTensor(data['prob_mask']))
             }
+
             model.hoi_classifier.train()
             prob_vec, factor_scores = model.hoi_classifier(feats)
 
@@ -81,6 +82,7 @@ def train_model(model,dataset_train,dataset_val,exp_const):
                 log_value('train_loss',loss.data[0],step)
                 log_value('max_prob',max_prob,step)
                 log_value('max_prob_tp',max_prob_tp,step)
+                print(exp_const.exp_name)
 
             if step%5000==0:
                 val_loss = eval_model(model,dataset_val,exp_const,num_samples=2500)
@@ -130,7 +132,7 @@ def eval_model(model,dataset,exp_const,num_samples):
             'object_one_hot': Variable(torch.cuda.FloatTensor(data['object_one_hot'])),
             'prob_mask': Variable(torch.cuda.FloatTensor(data['prob_mask']))
         }
-        
+
         prob_vec, factor_scores = model.hoi_classifier(feats)
         
         hoi_prob = prob_vec['hoi']

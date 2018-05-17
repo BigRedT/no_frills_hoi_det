@@ -11,6 +11,13 @@ parser.add_argument(
     default=None,
     required=True,
     help='Output directory')
+parser.add_argument(
+    '--ap_type', 
+    type=str, 
+    default=None,
+    required=True,
+    choices=['AP','NAP'],
+    help='Type of AP to use')
 
 def compute_mAP(APs,hoi_ids):
     return sum([APs[hoi_id] for hoi_id in hoi_ids]) / len(hoi_ids)
@@ -22,7 +29,7 @@ def main():
     bin_to_hoi_ids = io.load_json_object(data_const.bin_to_hoi_ids_json)
     
     mAP_json = os.path.join(args.out_dir,'mAP.json')
-    APs = io.load_json_object(mAP_json)['AP']
+    APs = io.load_json_object(mAP_json)[args.ap_type]
     bin_map = {}
     bin_count = {}
     for bin_id,hoi_ids in bin_to_hoi_ids.items():
@@ -43,7 +50,7 @@ def main():
 
     sample_complexity_analysis_json = os.path.join(
         args.out_dir,
-        'sample_complexity_analysis.json')
+        f'sample_complexity_analysis_of_{args.ap_type}.json')
     io.dump_json_object(
         sample_complexity_analysis,
         sample_complexity_analysis_json)

@@ -6,9 +6,12 @@ from data.hico.hico_constants import HicoConstants
 from utils.constants import Constants, ExpConstants
 import exp.hoi_classifier.data.hoi_candidates as hoi_candidates
 import exp.hoi_classifier.data.label_hoi_candidates as label_hoi_candidates
+import exp.hoi_classifier.data.label_hoi_candidates_oracle as label_hoi_candidates_oracle
 from exp.hoi_classifier.models.hoi_classifier_model import HoiClassifierConstants
 import exp.hoi_classifier.train as train
 import exp.hoi_classifier.eval as evaluate
+import exp.hoi_classifier.eval_oracle as evaluate_oracle
+import exp.hoi_classifier.eval_verb_confusion as evaluate_verb_confusion
 from exp.hoi_classifier.data.features_dataset import FeatureConstants
 import exp.hoi_classifier.data.cache_box_features as cache_box_features
 import exp.hoi_classifier.data.cache_pose_features as cache_pose_features
@@ -16,6 +19,8 @@ import exp.hoi_classifier.data.assign_pose_to_human_candidates as \
     assign_pose_to_human_candidates
 import exp.hoi_classifier.vis.top_boxes_per_hoi as \
     vis_top_boxes_per_hoi
+import exp.hoi_classifier.vis.top_boxes_per_hoi_wo_inference as \
+    vis_top_boxes_per_hoi_wo_inference
 
 parser.add_argument(
     '--gen_hoi_cand',
@@ -27,6 +32,11 @@ parser.add_argument(
     default=False,
     action='store_true',
     help='Apply this flag to label hoi candidates')
+parser.add_argument(
+    '--label_hoi_cand_oracle',
+    default=False,
+    action='store_true',
+    help='Apply this flag to label hoi candidates with human, obj, verb oracles')
 parser.add_argument(
     '--subset',
     type=str,
@@ -52,6 +62,16 @@ parser.add_argument(
     action='store_true',
     help='Use verb_given_human/object_appearance factor')
 parser.add_argument(
+    '--verb_given_human_appearance',
+    default=False,
+    action='store_true',
+    help='Set verb_given_human_appearance factor')
+parser.add_argument(
+    '--verb_given_object_appearance',
+    default=False,
+    action='store_true',
+    help='Set verb_given_object_appearance factor')
+parser.add_argument(
     '--verb_given_boxes_and_object_label',
     default=False,
     action='store_true',
@@ -66,6 +86,21 @@ parser.add_argument(
     default=False,
     action='store_true',
     help='Use detection prob from Faster-RCNN')
+parser.add_argument(
+    '--oracle_human',
+    default=False,
+    action='store_true',
+    help='Use oracle human prob')
+parser.add_argument(
+    '--oracle_object',
+    default=False,
+    action='store_true',
+    help='Use oracle object prob')
+parser.add_argument(
+    '--oracle_verb',
+    default=False,
+    action='store_true',
+    help='Use oracle verb prob')
 
 
 def exp_gen_and_label_hoi_cand():
@@ -74,7 +109,7 @@ def exp_gen_and_label_hoi_cand():
         args,
         parser,
         required_args=['subset'],
-        optional_args=['gen_hoi_cand','label_hoi_cand'])
+        optional_args=['gen_hoi_cand','label_hoi_cand','label_hoi_cand_oracle'])
     if len(not_specified_args) > 0:
         return
     
@@ -101,6 +136,13 @@ def exp_gen_and_label_hoi_cand():
             exp_const.exp_dir,
             f'hoi_candidates_{exp_const.subset}.hdf5')
         label_hoi_candidates.assign(exp_const,data_const)
+
+    if args.label_hoi_cand_oracle:
+        print('Labelling HOI candidates from Faster-RCNN dets using oracle...')
+        data_const.hoi_cand_hdf5 = os.path.join(
+            exp_const.exp_dir,
+            f'hoi_candidates_{exp_const.subset}.hdf5')
+        label_hoi_candidates_oracle.assign(exp_const,data_const)
 
 
 def exp_cache_box_feats():
@@ -179,6 +221,8 @@ def exp_train():
         required_args=['imgs_per_batch','fp_to_tp_ratio'],
         optional_args=[
             'verb_given_appearance',
+            'verb_given_human_appearance',
+            'verb_given_object_appearance',
             'verb_given_boxes_and_object_label',
             'verb_given_human_pose',
             'rcnn_det_prob'])
@@ -188,6 +232,10 @@ def exp_train():
         exp_name += '_rcnn_det_prob'
     if args.verb_given_appearance:
         exp_name += '_appearance'
+    if args.verb_given_human_appearance:
+        exp_name += '_human_appearance'
+    if args.verb_given_object_appearance:
+        exp_name += '_object_appearance'
     if args.verb_given_boxes_and_object_label:
         exp_name += '_boxes_and_object_label'
     if args.verb_given_human_pose:
@@ -233,6 +281,8 @@ def exp_train():
     model_const = Constants()
     model_const.hoi_classifier = HoiClassifierConstants()
     model_const.hoi_classifier.verb_given_appearance = args.verb_given_appearance
+    model_const.hoi_classifier.verb_given_human_appearance = args.verb_given_human_appearance
+    model_const.hoi_classifier.verb_given_object_appearance = args.verb_given_object_appearance
     model_const.hoi_classifier.verb_given_boxes_and_object_label = args.verb_given_boxes_and_object_label
     model_const.hoi_classifier.verb_given_human_pose = args.verb_given_human_pose
     model_const.hoi_classifier.rcnn_det_prob = args.rcnn_det_prob
@@ -248,6 +298,8 @@ def exp_eval():
         required_args=['model_num'],
         optional_args=[
             'verb_given_appearance',
+            'verb_given_human_appearance',
+            'verb_given_object_appearance',
             'verb_given_boxes_and_object_label',
             'verb_given_human_pose',
             'rcnn_det_prob'])
@@ -257,6 +309,10 @@ def exp_eval():
         exp_name += '_rcnn_det_prob'
     if args.verb_given_appearance:
         exp_name += '_appearance'
+    if args.verb_given_human_appearance:
+        exp_name += '_human_appearance'
+    if args.verb_given_object_appearance:
+        exp_name += '_object_appearance'
     if args.verb_given_boxes_and_object_label:
         exp_name += '_boxes_and_object_label'
     if args.verb_given_human_pose:
@@ -296,6 +352,8 @@ def exp_eval():
     model_const.model_num = args.model_num
     model_const.hoi_classifier = HoiClassifierConstants()
     model_const.hoi_classifier.verb_given_appearance = args.verb_given_appearance
+    model_const.hoi_classifier.verb_given_human_appearance = args.verb_given_human_appearance
+    model_const.hoi_classifier.verb_given_object_appearance = args.verb_given_object_appearance
     model_const.hoi_classifier.verb_given_boxes_and_object_label = args.verb_given_boxes_and_object_label
     model_const.hoi_classifier.verb_given_human_pose = args.verb_given_human_pose
     model_const.hoi_classifier.rcnn_det_prob = args.rcnn_det_prob
@@ -303,6 +361,161 @@ def exp_eval():
         exp_const.model_dir,
         f'hoi_classifier_{model_const.model_num}')
     evaluate.main(exp_const,data_const,model_const)
+
+
+def exp_eval_verb_conf():
+    args = parser.parse_args()
+    not_specified_args = manage_required_args(
+        args,
+        parser,
+        required_args=['model_num'],
+        optional_args=[
+            'verb_given_appearance',
+            'verb_given_human_appearance',
+            'verb_given_object_appearance',
+            'verb_given_boxes_and_object_label',
+            'verb_given_human_pose',
+            'rcnn_det_prob'])
+
+    exp_name = 'factors'
+    if args.rcnn_det_prob:
+        exp_name += '_rcnn_det_prob'
+    if args.verb_given_appearance:
+        exp_name += '_appearance'
+    if args.verb_given_human_appearance:
+        exp_name += '_human_appearance'
+    if args.verb_given_object_appearance:
+        exp_name += '_object_appearance'
+    if args.verb_given_boxes_and_object_label:
+        exp_name += '_boxes_and_object_label'
+    if args.verb_given_human_pose:
+        exp_name += '_human_pose'
+
+    out_base_dir = os.path.join(
+        os.getcwd(),
+        'data_symlinks/hico_exp/hoi_classifier')
+    exp_const = ExpConstants(
+        exp_name=exp_name,
+        out_base_dir=out_base_dir)
+    exp_const.model_dir = os.path.join(exp_const.exp_dir,'models')
+
+    data_const = FeatureConstants()
+    hoi_cand_dir = os.path.join(
+        os.getcwd(),
+        'data_symlinks/hico_exp/hoi_candidates')
+    data_const.hoi_cands_hdf5 = os.path.join(
+        hoi_cand_dir,
+        'hoi_candidates_test.hdf5')
+    data_const.box_feats_hdf5 = os.path.join(
+        hoi_cand_dir,
+        'hoi_candidates_box_feats_test.hdf5')
+    data_const.hoi_cand_labels_hdf5 = os.path.join(
+        hoi_cand_dir,
+        'hoi_candidate_labels_test.hdf5')
+    data_const.human_pose_feats_hdf5 = os.path.join(
+        hoi_cand_dir,
+        'human_pose_feats_test.hdf5')
+    data_const.faster_rcnn_feats_hdf5 = os.path.join(
+        data_const.proc_dir,
+        'faster_rcnn_fc7.hdf5')
+    data_const.balanced_sampling = False
+    data_const.subset = 'test' 
+    
+    model_const = Constants()
+    model_const.model_num = args.model_num
+    model_const.hoi_classifier = HoiClassifierConstants()
+    model_const.hoi_classifier.verb_given_appearance = args.verb_given_appearance
+    model_const.hoi_classifier.verb_given_human_appearance = args.verb_given_human_appearance
+    model_const.hoi_classifier.verb_given_object_appearance = args.verb_given_object_appearance
+    model_const.hoi_classifier.verb_given_boxes_and_object_label = args.verb_given_boxes_and_object_label
+    model_const.hoi_classifier.verb_given_human_pose = args.verb_given_human_pose
+    model_const.hoi_classifier.rcnn_det_prob = args.rcnn_det_prob
+    model_const.hoi_classifier.model_pth = os.path.join(
+        exp_const.model_dir,
+        f'hoi_classifier_{model_const.model_num}')
+    evaluate_verb_confusion.main(exp_const,data_const,model_const)
+
+
+def exp_eval_oracle():
+    args = parser.parse_args()
+    not_specified_args = manage_required_args(
+        args,
+        parser,
+        required_args=['model_num'],
+        optional_args=[
+            'verb_given_appearance',
+            'verb_given_human_appearance',
+            'verb_given_object_appearance',
+            'verb_given_boxes_and_object_label',
+            'verb_given_human_pose',
+            'rcnn_det_prob',
+            'oracle_human',
+            'oracle_object',
+            'oracle_verb'])
+
+    exp_name = 'factors'
+    if args.rcnn_det_prob:
+        exp_name += '_rcnn_det_prob'
+    if args.verb_given_appearance:
+        exp_name += '_appearance'
+    if args.verb_given_human_appearance:
+        exp_name += '_human_appearance'
+    if args.verb_given_object_appearance:
+        exp_name += '_object_appearance'
+    if args.verb_given_boxes_and_object_label:
+        exp_name += '_boxes_and_object_label'
+    if args.verb_given_human_pose:
+        exp_name += '_human_pose'
+
+    out_base_dir = os.path.join(
+        os.getcwd(),
+        'data_symlinks/hico_exp/hoi_classifier')
+    exp_const = ExpConstants(
+        exp_name=exp_name,
+        out_base_dir=out_base_dir)
+    exp_const.model_dir = os.path.join(exp_const.exp_dir,'models')
+    exp_const.oracle_human = args.oracle_human
+    exp_const.oracle_object = args.oracle_object
+    exp_const.oracle_verb = args.oracle_verb
+
+    data_const = FeatureConstants()
+    hoi_cand_dir = os.path.join(
+        os.getcwd(),
+        'data_symlinks/hico_exp/hoi_candidates')
+    data_const.hoi_cands_hdf5 = os.path.join(
+        hoi_cand_dir,
+        'hoi_candidates_test.hdf5')
+    data_const.box_feats_hdf5 = os.path.join(
+        hoi_cand_dir,
+        'hoi_candidates_box_feats_test.hdf5')
+    data_const.hoi_cand_labels_hdf5 = os.path.join(
+        hoi_cand_dir,
+        'hoi_candidate_labels_test.hdf5')
+    data_const.hoi_cand_oracle_labels_hdf5 = os.path.join(
+        hoi_cand_dir,
+        'hoi_candidate_oracle_labels_test.hdf5')
+    data_const.human_pose_feats_hdf5 = os.path.join(
+        hoi_cand_dir,
+        'human_pose_feats_test.hdf5')
+    data_const.faster_rcnn_feats_hdf5 = os.path.join(
+        data_const.proc_dir,
+        'faster_rcnn_fc7.hdf5')
+    data_const.balanced_sampling = False
+    data_const.subset = 'test' 
+    
+    model_const = Constants()
+    model_const.model_num = args.model_num
+    model_const.hoi_classifier = HoiClassifierConstants()
+    model_const.hoi_classifier.verb_given_appearance = args.verb_given_appearance
+    model_const.hoi_classifier.verb_given_human_appearance = args.verb_given_human_appearance
+    model_const.hoi_classifier.verb_given_object_appearance = args.verb_given_object_appearance
+    model_const.hoi_classifier.verb_given_boxes_and_object_label = args.verb_given_boxes_and_object_label
+    model_const.hoi_classifier.verb_given_human_pose = args.verb_given_human_pose
+    model_const.hoi_classifier.rcnn_det_prob = args.rcnn_det_prob
+    model_const.hoi_classifier.model_pth = os.path.join(
+        exp_const.model_dir,
+        f'hoi_classifier_{model_const.model_num}')
+    evaluate_oracle.main(exp_const,data_const,model_const)
 
 
 def exp_top_boxes_per_hoi():
@@ -362,6 +575,63 @@ def exp_top_boxes_per_hoi():
         f'hoi_classifier_{model_const.model_num}')
 
     vis_top_boxes_per_hoi.main(exp_const,data_const,model_const)
+
+
+def exp_top_boxes_per_hoi_wo_inference():
+    args = parser.parse_args()
+    not_specified_args = manage_required_args(
+        args,
+        parser,
+        required_args=['model_num'],
+        optional_args=[
+            'verb_given_appearance',
+            'verb_given_boxes_and_object_label',
+            'verb_given_human_pose',
+            'rcnn_det_prob'])
+
+    exp_name = 'factors'
+    if args.rcnn_det_prob:
+        exp_name += '_rcnn_det_prob'
+    if args.verb_given_appearance:
+        exp_name += '_appearance'
+    if args.verb_given_boxes_and_object_label:
+        exp_name += '_boxes_and_object_label'
+    if args.verb_given_human_pose:
+        exp_name += '_human_pose'
+     
+    out_base_dir = os.path.join(
+        os.getcwd(),
+        'data_symlinks/hico_exp/hoi_classifier')
+    exp_const = ExpConstants(
+        exp_name=exp_name,
+        out_base_dir=out_base_dir)
+    exp_const.model_dir = os.path.join(exp_const.exp_dir,'models')
+    exp_const.num_to_vis = 10
+
+    data_const = FeatureConstants()
+    data_const.pred_hoi_dets_h5py = os.path.join(
+        exp_const.exp_dir,
+        f'pred_hoi_dets_test_{args.model_num}.hdf5')
+    hoi_cand_dir = os.path.join(
+        os.getcwd(),
+        'data_symlinks/hico_exp/hoi_candidates')
+    data_const.human_pose_feats_hdf5 = os.path.join(
+        hoi_cand_dir,
+        'human_pose_feats_test.hdf5')
+    data_const.num_pose_keypoints = 18
+    
+    model_const = Constants()
+    model_const.model_num = args.model_num
+    model_const.hoi_classifier = HoiClassifierConstants()
+    model_const.hoi_classifier.verb_given_appearance = args.verb_given_appearance
+    model_const.hoi_classifier.verb_given_boxes_and_object_label = args.verb_given_boxes_and_object_label
+    model_const.hoi_classifier.verb_given_human_pose = args.verb_given_human_pose
+    model_const.hoi_classifier.rcnn_det_prob = args.rcnn_det_prob
+    model_const.hoi_classifier.model_pth = os.path.join(
+        exp_const.model_dir,
+        f'hoi_classifier_{model_const.model_num}')
+
+    vis_top_boxes_per_hoi_wo_inference.main(exp_const,data_const,model_const)
 
 
 if __name__=='__main__':

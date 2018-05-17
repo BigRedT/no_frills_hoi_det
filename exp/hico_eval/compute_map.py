@@ -45,6 +45,7 @@ parser.add_argument(
 
 def match_hoi(pred_det,gt_dets):
     is_match = False
+    remaining_gt_dets = []
     for gt_det in gt_dets:
         human_iou = compute_iou(pred_det['human_box'],gt_det['human_box'])
         if human_iou > 0.5:
@@ -52,8 +53,9 @@ def match_hoi(pred_det,gt_dets):
             if object_iou > 0.5:
                 is_match = True
                 break
+        remaining_gt_dets.append(gt_det)
 
-    return is_match
+    return is_match, remaining_gt_dets
 
 
 def compute_ap(precision,recall):
@@ -87,11 +89,28 @@ def compute_pr(y_true,y_score,npos):
     return precision, recall
 
 
+def compute_normalized_pr(y_true,y_score,npos,N=196.45):
+    sorted_y_true = [y for y,_ in 
+        sorted(zip(y_true,y_score),key=lambda x: x[1],reverse=True)]
+    tp = np.array(sorted_y_true)
+    fp = ~tp
+    tp = np.cumsum(tp)
+    fp = np.cumsum(fp)
+    if npos==0:
+        recall = np.nan*tp
+    else:
+        recall = tp / npos
+    precision = recall*N / (recall*N + fp)
+    nap = np.sum(precision[sorted_y_true]) / (npos+1e-6)
+    return precision, recall, nap
+
+
 def eval_hoi(hoi_id,global_ids,gt_dets,pred_dets_hdf5,out_dir):
     print(f'Evaluating hoi_id: {hoi_id} ...')
     pred_dets = h5py.File(pred_dets_hdf5,'r')
     y_true = []
     y_score = []
+    det_id = []
     npos = 0
     for global_id in global_ids:
         if hoi_id in gt_dets[global_id]:
@@ -104,21 +123,29 @@ def eval_hoi(hoi_id,global_ids,gt_dets,pred_dets_hdf5,out_dir):
         hoi_dets = \
             pred_dets[global_id]['human_obj_boxes_scores'][start_id:end_id]
 
-        for i in range(hoi_dets.shape[0]):     
+        num_dets = hoi_dets.shape[0]
+        sorted_idx = [idx for idx,_ in sorted(
+            zip(range(num_dets),hoi_dets[:,8].tolist()),
+            key=lambda x: x[1],
+            reverse=True)]
+        for i in sorted_idx:
             pred_det = {
                 'human_box': hoi_dets[i,:4],
                 'object_box': hoi_dets[i,4:8],
                 'score': hoi_dets[i,8]
             }
-            y_true.append(match_hoi(pred_det,candidate_gt_dets))
+            is_match, candidate_gt_dets = match_hoi(pred_det,candidate_gt_dets)
+            y_true.append(is_match)
             y_score.append(pred_det['score'])
+            det_id.append((global_id,i))
 
     # Compute PR
     precision,recall = compute_pr(y_true,y_score,npos)
+    nprecision,nrecall,nap = compute_normalized_pr(y_true,y_score,npos)
 
     # Compute AP
     ap = compute_ap(precision,recall)
-    print(f'AP:{ap}')
+    print(f'AP:{ap},NAP:{nap}')
 
     # Plot PR curve
     # plt.figure()
@@ -138,15 +165,16 @@ def eval_hoi(hoi_id,global_ids,gt_dets,pred_dets_hdf5,out_dir):
     ap_data = {
         'y_true': y_true,
         'y_score': y_score,
-        'precision': precision,
-        'recall': recall,
+        'det_id': det_id,
+        'npos': npos,
         'ap': ap,
+        'nap': nap,
     }
     np.save(
         os.path.join(out_dir,f'{hoi_id}_ap_data.npy'),
         ap_data)
 
-    return (ap, hoi_id)
+    return (ap, nap, hoi_id)
 
 
 def load_gt_dets(proc_dir,global_ids_set):
@@ -214,18 +242,24 @@ def main():
 
     mAP = {
         'AP': {},
+        'NAP': {},
         'mAP': 0,
+        'mNAP': 0,
         'invalid': 0,
     }
     map_ = 0
+    mnap_ = 0
     count = 0
-    for ap,hoi_id in output:
+    for ap,nap,hoi_id in output:
         mAP['AP'][hoi_id] = ap
+        mAP['NAP'][hoi_id] = nap
         if not np.isnan(ap):
             count += 1
             map_ += ap
+            mnap_ += nap
 
     mAP['mAP'] = map_ / count
+    mAP['mNAP'] = mnap_ / count
     mAP['invalid'] = len(output) - count
 
     mAP_json = os.path.join(
