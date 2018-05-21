@@ -15,11 +15,11 @@ def main():
     
     map_json = os.path.join(
         exp_dir,
-        'mAP_eval/test_25000/mAP.json')
+        'mAP_eval_greedy_bug_fix/test_25000/mAP.json')
 
     map_baseline_json = os.path.join(
         os.getcwd(),
-        f'data_symlinks/hico_exp/hoi_classifier/factors_rcnn_det_prob/mAP_eval/test_-1/mAP.json')
+        f'data_symlinks/hico_exp/hoi_classifier/factors_rcnn_det_prob/mAP_eval_greedy_bug_fix/test_-1/mAP.json')
     
     hoi_aps = io.load_json_object(map_json)['AP']
     
@@ -78,7 +78,7 @@ def main():
         ),
     )
 
-    filename = os.path.join(exp_dir,'vis/obj_aps_per_interaction.html')
+    filename = os.path.join(exp_dir,'vis/obj_aps_per_interaction_greedy_bug_fix.html')
     plotly.offline.plot(
         {'data': data, 'layout': layout},
         filename=filename,

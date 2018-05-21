@@ -1,6 +1,7 @@
 import os
 import h5py
 from tqdm import tqdm
+import copy
 
 import utils.io as io
 import numpy as np
@@ -39,37 +40,44 @@ def load_gt_dets(anno_list_json,global_ids):
 
 def match_hoi(pred_det,gt_dets):
     is_match = False
-    for gt_det in gt_dets:
+    remaining = [gt_det for det_det in gt_dets]
+    for i, gt_det in enumerate(gt_dets):
         human_iou = compute_iou(pred_det['human_box'],gt_det['human_box'])
         if human_iou > 0.5:
             object_iou = compute_iou(pred_det['object_box'],gt_det['object_box'])
             if object_iou > 0.5:
                 is_match = True
+                del remaining[i]
                 break
 
-    return is_match
+    return is_match, remaining
 
 
 def match_human(pred_det,gt_dets):
     is_match = False
-    for gt_det in gt_dets:
+    remaining = [gt_det for det_det in gt_dets]
+    for i, gt_det in enumerate(gt_dets):
         human_iou = compute_iou(pred_det['human_box'],gt_det['human_box'])
         if human_iou > 0.5:
             is_match = True
+            del remaining[i]
             break
 
-    return is_match
+    return is_match, remaining
 
 
 def match_object(pred_det,gt_dets):
     is_match = False
-    for gt_det in gt_dets:
+    remaining = [gt_det for det_det in gt_dets]
+    for i,gt_det in enumerate(gt_dets):
         object_iou = compute_iou(pred_det['object_box'],gt_det['object_box'])
         if object_iou > 0.5:
             is_match = True
+            del remaining[i]
             break
 
-    return is_match
+    return is_match, remaining
+
 
 
 def assign(exp_const,data_const):
@@ -91,6 +99,8 @@ def assign(exp_const,data_const):
     split_ids = io.load_json_object(data_const.split_ids_json)
     global_ids = split_ids[exp_const.subset]
     gt_dets = load_gt_dets(data_const.anno_list_json,global_ids)
+    human_gt_dets = copy.deepcopy(gt_dets)
+    object_gt_dets = copy.deepcopy(gt_dets)
 
     print('Loading hoi_list.json ...')
     hoi_list = io.load_json_object(data_const.hoi_list_json)
@@ -128,7 +138,8 @@ def assign(exp_const,data_const):
                 }
 
                 # Human match
-                is_human_match = match_human(cand_det,gt_dets[global_id][hoi_id])
+                is_human_match,human_gt_dets[global_id]['001'] = \
+                    match_human(cand_det,human_gt_dets[global_id]['001'])
                 if is_human_match:
                     labels[i,0] = 1.0
 
@@ -137,7 +148,7 @@ def assign(exp_const,data_const):
                 for hoi_id_ in obj_to_hoi_ids[obj]:
                     if hoi_id_ not in gt_dets[global_id]:
                         continue
-                    is_obj_match = match_object(cand_det,gt_dets[global_id][hoi_id_])
+                    is_obj_match = match_object(cand_det,object_gt_dets[global_id][hoi_id_])
                     if is_obj_match:
                         break
                 
@@ -149,7 +160,7 @@ def assign(exp_const,data_const):
                 for hoi_id_ in verb_to_hoi_ids[verb]:
                     if hoi_id_ not in gt_dets[global_id]:
                         continue
-                    is_verb_match = match_hoi(cand_det,gt_dets[global_id][hoi_id_])
+                    is_verb_match = match_hoi(cand_det,verb_gt_dets[global_id][hoi_id_])
                     if is_verb_match:
                         break
                 

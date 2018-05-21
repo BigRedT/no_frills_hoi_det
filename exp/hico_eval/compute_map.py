@@ -45,15 +45,16 @@ parser.add_argument(
 
 def match_hoi(pred_det,gt_dets):
     is_match = False
-    remaining_gt_dets = []
-    for gt_det in gt_dets:
+    remaining_gt_dets = [gt_det for gt_det in gt_dets]
+    for i,gt_det in enumerate(gt_dets):
         human_iou = compute_iou(pred_det['human_box'],gt_det['human_box'])
         if human_iou > 0.5:
             object_iou = compute_iou(pred_det['object_box'],gt_det['object_box'])
             if object_iou > 0.5:
                 is_match = True
+                del remaining_gt_dets[i]
                 break
-        remaining_gt_dets.append(gt_det)
+        #remaining_gt_dets.append(gt_det)
 
     return is_match, remaining_gt_dets
 
@@ -266,6 +267,8 @@ def main():
         args.out_dir,
         'mAP.json') 
     io.dump_json_object(mAP,mAP_json)
+
+    print(args.out_dir)
 
 
 if __name__=='__main__':
