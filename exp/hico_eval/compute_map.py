@@ -142,11 +142,11 @@ def eval_hoi(hoi_id,global_ids,gt_dets,pred_dets_hdf5,out_dir):
 
     # Compute PR
     precision,recall = compute_pr(y_true,y_score,npos)
-    nprecision,nrecall,nap = compute_normalized_pr(y_true,y_score,npos)
+    #nprecision,nrecall,nap = compute_normalized_pr(y_true,y_score,npos)
 
     # Compute AP
     ap = compute_ap(precision,recall)
-    print(f'AP:{ap},NAP:{nap}')
+    print(f'AP:{ap}')
 
     # Plot PR curve
     # plt.figure()
@@ -169,13 +169,12 @@ def eval_hoi(hoi_id,global_ids,gt_dets,pred_dets_hdf5,out_dir):
         'det_id': det_id,
         'npos': npos,
         'ap': ap,
-        'nap': nap,
     }
     np.save(
         os.path.join(out_dir,f'{hoi_id}_ap_data.npy'),
         ap_data)
 
-    return (ap, nap, hoi_id)
+    return (ap,hoi_id)
 
 
 def load_gt_dets(proc_dir,global_ids_set):
@@ -243,24 +242,18 @@ def main():
 
     mAP = {
         'AP': {},
-        'NAP': {},
         'mAP': 0,
-        'mNAP': 0,
         'invalid': 0,
     }
     map_ = 0
-    mnap_ = 0
     count = 0
-    for ap,nap,hoi_id in output:
+    for ap,hoi_id in output:
         mAP['AP'][hoi_id] = ap
-        mAP['NAP'][hoi_id] = nap
         if not np.isnan(ap):
             count += 1
             map_ += ap
-            mnap_ += nap
 
     mAP['mAP'] = map_ / count
-    mAP['mNAP'] = mnap_ / count
     mAP['invalid'] = len(output) - count
 
     mAP_json = os.path.join(
@@ -268,7 +261,7 @@ def main():
         'mAP.json') 
     io.dump_json_object(mAP,mAP_json)
 
-    print(args.out_dir)
+    print(f'APs have been saved to {args.out_dir}')
 
 
 if __name__=='__main__':
