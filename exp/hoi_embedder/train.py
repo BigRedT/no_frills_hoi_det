@@ -16,16 +16,29 @@ import utils.io as io
 import utils.losses as losses
 from utils.model import Model
 from utils.constants import save_constants
-from exp.hoi_classifier.models.hoi_classifier_model import HoiClassifier
-from exp.hoi_classifier.data.features_dataset import Features
+from exp.hoi_embedder.models.hoi_classifier_model import HoiClassifier
+from exp.hoi_embedder.data.features_dataset import Features
+from exp.hoi_embedder.losses import Sim2GloveConst, Sim2Glove
 
 
 def train_model(model,dataset_train,dataset_val,exp_const):
     params = itertools.chain(
         model.hoi_classifier.parameters())
-    optimizer = optim.Adam(params,lr=exp_const.lr)
+    params_to_opt = [p for p in params if p.requires_grad]
+    optimizer = optim.Adam(params_to_opt,lr=exp_const.lr)
     
     criterion = nn.BCELoss()
+
+    # Create criterion for enforcing similarity to glove
+    sim2glove_const = Sim2GloveConst()
+    sim2glove_const.glove_verb_vecs_npy = \
+        model.const.hoi_classifier.glove_verb_vecs_npy
+    sim2glove_const.verb_vec_dim = model.const.hoi_classifier.verb_vec_dim
+    sim2glove_criterion = Sim2Glove(sim2glove_const).cuda()
+    sim2glove_txt = os.path.join(
+        exp_const.exp_dir,
+        'sim2glove.txt')
+    sim2glove_criterion.to_file(sim2glove_txt)
     
     step = 0
     optimizer.zero_grad()
@@ -51,6 +64,11 @@ def train_model(model,dataset_train,dataset_val,exp_const):
             hoi_prob = prob_vec['hoi']
             hoi_labels = Variable(torch.cuda.FloatTensor(data['hoi_label_vec']))
             loss = criterion(hoi_prob,hoi_labels)
+            
+            # add similarity to glove loss
+            sim2glove_loss = sim2glove_criterion(model.hoi_classifier.verb_vecs)
+            if exp_const.sim2glove:
+                loss = loss + sim2glove_loss
 
             loss.backward()
             if step%exp_const.imgs_per_batch==0:
@@ -82,10 +100,11 @@ def train_model(model,dataset_train,dataset_val,exp_const):
                 log_value('train_loss',loss.data[0],step)
                 log_value('max_prob',max_prob,step)
                 log_value('max_prob_tp',max_prob_tp,step)
+                log_value('sim2glove',sim2glove_loss.data[0],step)
                 print(exp_const.exp_name)
 
-            if step%5000==0:
-                val_loss = eval_model(model,dataset_val,exp_const,num_samples=2500)
+            if step%5000==0: 
+                val_loss = eval_model(model,dataset_val,exp_const,num_samples=500)
                 log_value('val_loss',val_loss,step)
                 log_str = \
                     'Epoch: {} | Iter: {} | Step: {} | Val Loss: {:.8f}'
@@ -104,6 +123,13 @@ def train_model(model,dataset_train,dataset_val,exp_const):
                 torch.save(
                     model.hoi_classifier.state_dict(),
                     hoi_classifier_pth)
+                
+                sim2glove_pth = os.path.join(
+                    exp_const.model_dir,
+                    f'sim2glove_{step}')
+                torch.save(
+                    sim2glove_criterion.state_dict(),
+                    sim2glove_pth)
 
             step += 1
 

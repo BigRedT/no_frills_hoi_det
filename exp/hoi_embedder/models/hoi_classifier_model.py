@@ -2,18 +2,19 @@ import torch
 import copy
 import torch.nn as nn
 from torch.autograd import Variable
+import numpy as np
 
 import utils.io as io
 import utils.pytorch_layers as pytorch_layers
-from exp.hoi_classifier.models.verb_given_object_appearance import \
+from exp.hoi_embedder.models.verb_given_object_appearance import \
     VerbGivenObjectAppearanceConstants, VerbGivenObjectAppearance
-from exp.hoi_classifier.models.verb_given_human_appearance import \
+from exp.hoi_embedder.models.verb_given_human_appearance import \
     VerbGivenHumanAppearanceConstants, VerbGivenHumanAppearance    
-from exp.hoi_classifier.models.verb_given_boxes_and_object_label import \
+from exp.hoi_embedder.models.verb_given_boxes_and_object_label import \
     VerbGivenBoxesAndObjectLabelConstants, VerbGivenBoxesAndObjectLabel
-from exp.hoi_classifier.models.verb_given_human_pose import \
+from exp.hoi_embedder.models.verb_given_human_pose import \
     VerbGivenHumanPoseConstants, VerbGivenHumanPose
-from exp.hoi_classifier.models.scatter_verbs_to_hois import \
+from exp.hoi_embedder.models.scatter_verbs_to_hois import \
     ScatterVerbsToHoisConstants, ScatterVerbsToHois
 
 
@@ -34,12 +35,22 @@ class HoiClassifierConstants(io.JsonSerializableClass):
         self.verb_given_human_pose = True
         self.rcnn_det_prob = True
         self.scatter_verbs_to_hois = ScatterVerbsToHoisConstants()
+        self.verb_vec_dim = 300 
+        self.num_verbs = 117
+        self.verb_vec_init = 'random'
+        self.verb_vec_fine_tune = True
+        self.glove_verb_vecs_npy = None
 
     @property
     def selected_factor_constants(self):
         factor_constants = {}
         for factor_name in self.selected_factor_names:
             const = self.FACTOR_NAME_TO_MODULE_CONSTANTS[factor_name]
+            if 'verb_given' in factor_name:
+                const.verb_vec_dim = self.verb_vec_dim
+                assert_str = 'num_verbs does not match between ' + \
+                    f'HoiClassifier and factor {factor_name}'
+                assert(self.num_verbs==const.num_verbs), assert_str
             factor_constants[factor_name] = const
         return factor_constants
 
@@ -77,8 +88,29 @@ class HoiClassifier(nn.Module,io.WritableToFile):
         self.sigmoid = pytorch_layers.get_activation('Sigmoid')
         self.scatter_verbs_to_hois = ScatterVerbsToHois(
             self.const.scatter_verbs_to_hois)
+        self.verb_vecs = self.create_verb_vecs(
+            self.const.num_verbs,
+            self.const.verb_vec_dim,
+            self.const.verb_vec_init,
+            self.const.verb_vec_fine_tune)
         for name, const in self.const.selected_factor_constants.items():
             self.create_factor(name,const)
+
+    def create_verb_vecs(
+            self,
+            num_verbs,
+            verb_vec_dim,
+            init='random',
+            fine_tune=True):
+        if init=='random':
+            std = np.sqrt(1/verb_vec_dim)
+            verb_vecs = np.random.normal(scale=std,size=(num_verbs,verb_vec_dim))
+        elif init=='glove':
+            verb_vecs = np.load(self.const.glove_verb_vecs_npy)
+        else:
+            assert(False),'only random and glove initialization supported'
+        verb_vecs = torch.FloatTensor(verb_vecs)
+        return nn.Parameter(data=verb_vecs,requires_grad=fine_tune)
 
     def create_factor(self,factor_name,factor_const):
         factor = self.FACTOR_NAME_TO_MODULE[factor_name](factor_const)
@@ -90,8 +122,13 @@ class HoiClassifier(nn.Module,io.WritableToFile):
         verb_factor_scores = 0
         for factor_name in self.const.selected_factor_names:
             module = getattr(self,factor_name)
-            factor_scores[factor_name] = module(feats)
-            if 'verb_given' in factor_name:
+            if 'verb_given' not in factor_name:
+                factor_scores[factor_name] = module(feats)
+            else:
+                try:
+                    factor_scores[factor_name] = module(feats,self.verb_vecs)
+                except:
+                    import pdb; pdb.set_trace()
                 any_verb_factor = True
                 verb_factor_scores += factor_scores[factor_name]
 

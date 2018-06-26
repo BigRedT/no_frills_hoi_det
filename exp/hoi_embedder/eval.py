@@ -14,8 +14,8 @@ from tensorboard_logger import configure, log_value
 import utils.io as io
 from utils.model import Model
 from utils.constants import save_constants
-from exp.hoi_classifier.models.hoi_classifier_model import HoiClassifier
-from exp.hoi_classifier.data.features_dataset import Features
+from exp.hoi_embedder.models.hoi_classifier_model import HoiClassifier
+from exp.hoi_embedder.data.features_dataset import Features
 
 
 def eval_model(model,dataset,exp_const):
