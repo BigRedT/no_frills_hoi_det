@@ -1,9 +1,9 @@
 #!/bin/bash
 SUBSET="test"
 HICO_EXP_DIR="${PWD}/data_symlinks/hico_exp"
-EXP_NAME="hoi_classifier/factors_rcnn_det_prob_boxes_and_object_label"
-MODEL_NUM="25000"
-ORACLE="oracle_human_True_object_True_verb_False"
+EXP_NAME="hoi_embedder/verb_vec_init_glove_finetune_False_dim_300"
+echo $EXP_NAME
+MODEL_NUM="70000"
 PRED_HOI_DETS_HDF5="${HICO_EXP_DIR}/${EXP_NAME}/pred_hoi_dets_${SUBSET}_${MODEL_NUM}.hdf5"
 OUT_DIR="${HICO_EXP_DIR}/${EXP_NAME}/mAP_eval/${SUBSET}_${MODEL_NUM}"
 PROC_DIR="${PWD}/data_symlinks/hico_processed"
