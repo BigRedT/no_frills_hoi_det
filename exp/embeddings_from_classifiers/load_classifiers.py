@@ -34,7 +34,7 @@ def load_pretrained_hoi_classifier(model_path=None):
         classifiers[factor] = \
             hoi_classifier.__getattr__(factor).mlp.layers[-1][0].weight
 
-    return classifiers
+    return classifiers, hoi_classifier
 
 
 def test():
