@@ -120,7 +120,7 @@ def main(exp_const,data_const,model_const):
         model.one_to_all.one_to_all_mlps['word_vector'] = Identity()
 
     print('Load pretrained Hoi Classifier model ...')
-    feats = load_pretrained_hoi_classifier()
+    feats,_ = load_pretrained_hoi_classifier()
 
     print('Load pretrained glove verb vectors')
     if exp_const.word_vec=='random':
