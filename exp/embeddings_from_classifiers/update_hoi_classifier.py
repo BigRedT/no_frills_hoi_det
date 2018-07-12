@@ -20,6 +20,7 @@ def main(exp_const,data_const,model_const):
     model.one_to_all = OneToAll(model_const.one_to_all)
     model.one_to_all.load_state_dict(
         torch.load(model.const.one_to_all.model_path))
+
     print('    Creating hoi_classifier model ...')
     _, model.hoi_classifier = load_pretrained_hoi_classifier()
 
