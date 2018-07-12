@@ -24,8 +24,11 @@ from exp.embeddings_from_classifiers.load_classifiers import \
 
 def train(model,data_const,exp_const):
     params = model.one_to_all.parameters()
-    optimizer = optim.SGD(params,lr=exp_const.lr,momentum=0.9)
-    #optimizer = optim.Adam(params,lr=exp_const.lr)
+    #optimizer = optim.SGD(params,lr=exp_const.lr,momentum=0.9)
+    optimizer = optim.Adam(
+        params,
+        lr=exp_const.lr,
+        weight_decay=exp_const.weight_decay)
     feats = data_const.feats
     for step in range(exp_const.num_steps):
         # Train
@@ -115,9 +118,6 @@ def main(exp_const,data_const,model_const):
     model.const = model_const
     model.one_to_all = OneToAll(model_const.one_to_all).cuda()
     model.to_txt(exp_const.exp_dir,single_file=True)
-    if exp_const.make_identity:
-        model.one_to_all.all_to_one_mlps['word_vector'] = Identity()
-        model.one_to_all.one_to_all_mlps['word_vector'] = Identity()
 
     print('Load pretrained Hoi Classifier model ...')
     feats,_ = load_pretrained_hoi_classifier()
