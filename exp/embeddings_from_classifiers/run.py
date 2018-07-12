@@ -33,6 +33,10 @@ parser.add_argument(
     type=str_to_bool,
     default=True,
     help='Whether to use coupling variable')
+parser.add_argument(
+    '--exp_name',
+    type=str,
+    help='Name of the experiment for eval')
 
 def exp_train():
     exp_name = 'first_try'
@@ -137,21 +141,22 @@ def exp_ablation_identity_vs_mlp():
     if len(not_specified_args) > 0:
         return
 
-    exp_name = f'make_identity_{args.make_identity}'
+    exp_name = f'make_identity_{args.make_identity}_sgd' #_2_hidden_layers_adam'
     out_base_dir=os.path.join(
         os.getcwd(),
-        'data_symlinks/hico_exp/embeddings_from_classifier/ablation_identity_vs_mlp')
+        'data_symlinks/hico_exp/embeddings_from_classifier/' + \
+        'ablation_identity_vs_mlp')
     exp_const = ExpConstants(
         exp_name=exp_name,
         out_base_dir=out_base_dir)
     exp_const.log_dir = os.path.join(exp_const.exp_dir,'log')
     exp_const.model_dir = os.path.join(exp_const.exp_dir,'models')
     exp_const.num_steps = 40000
-    exp_const.lr = 1e-2
+    exp_const.lr = 1e-3
+    exp_const.weight_decay = 0
     exp_const.num_train_verbs = 100
     exp_const.num_test_verbs = 17
     exp_const.word_vec = 'glove'
-    exp_const.make_identity = args.make_identity
 
     data_const = HicoConstants()
     data_const.glove_verb_vecs_npy = os.path.join(
@@ -160,6 +165,8 @@ def exp_ablation_identity_vs_mlp():
 
     model_const = Constants()
     model_const.one_to_all = OneToAllConstants()
+    model_const.one_to_all.use_coupling_variable = False
+    model_const.one_to_all.make_identity = args.make_identity
     train.main(exp_const,data_const,model_const)
 
 
@@ -200,10 +207,11 @@ def exp_ablation_coupling():
 
 
 def exp_update_hoi_classifier():
-    exp_name = f'coupling_False'
+    make_identity = False
+    exp_name = f'make_identity_{make_identity}_sgd'
     out_base_dir=os.path.join(
         os.getcwd(),
-        'data_symlinks/hico_exp/embeddings_from_classifier/ablation_coupling')
+        'data_symlinks/hico_exp/embeddings_from_classifier/ablation_identity_vs_mlp')
     exp_const = ExpConstants(
         exp_name=exp_name,
         out_base_dir=out_base_dir)
@@ -218,7 +226,8 @@ def exp_update_hoi_classifier():
     # one_to_all model constants
     model_const.one_to_all = OneToAllConstants()
     model_const.one_to_all.use_coupling_variable = False
-    model_const.one_to_all.model_num = 25000
+    model_const.one_to_all.make_identity = make_identity
+    model_const.one_to_all.model_num = 10000
     model_const.one_to_all.model_path = os.path.join(
         exp_const.model_dir,
         f'one_to_all_{model_const.one_to_all.model_num}')
@@ -228,10 +237,20 @@ def exp_update_hoi_classifier():
 
 
 def exp_eval():
-    exp_name = f'coupling_False'
+    # make_identity = False
+    # exp_name = f'make_identity_{make_identity}_adam'
+    args = parser.parse_args()
+    not_specified_args = manage_required_args(
+        args,
+        parser,
+        required_args=['exp_name'])
+    if len(not_specified_args) > 0:
+        return
+
+    exp_name = args.exp_name
     out_base_dir=os.path.join(
         os.getcwd(),
-        'data_symlinks/hico_exp/embeddings_from_classifier/ablation_coupling')
+        'data_symlinks/hico_exp/embeddings_from_classifier/ablation_identity_vs_mlp')
     exp_const = ExpConstants(
         exp_name=exp_name,
         out_base_dir=out_base_dir)
@@ -260,7 +279,7 @@ def exp_eval():
     data_const.subset = 'test' 
     
     model_const = Constants()
-    model_const.model_num = 25000
+    model_const.model_num = 10000
     model_const.hoi_classifier_path = os.path.join(
         exp_const.model_dir,
         f'hoi_classifier_{model_const.model_num}')
