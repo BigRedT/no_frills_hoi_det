@@ -141,7 +141,7 @@ def exp_ablation_identity_vs_mlp():
     if len(not_specified_args) > 0:
         return
 
-    exp_name = f'make_identity_{args.make_identity}_sgd' #_2_hidden_layers_adam'
+    exp_name = f'make_identity_{args.make_identity}_adam' #_2_hidden_layers_adam'
     out_base_dir=os.path.join(
         os.getcwd(),
         'data_symlinks/hico_exp/embeddings_from_classifier/' + \
