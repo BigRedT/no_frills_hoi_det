@@ -19,6 +19,7 @@ class OneToAllConstants(io.JsonSerializableClass):
         self.verb_vec_dim = 300
         self.num_verbs = 117
         self.use_coupling_variable = True
+        self.make_identity = False
 
     def one_to_all_mlp_const(self,feat_dim):
         in_dim = self.verb_vec_dim
@@ -30,7 +31,7 @@ class OneToAllConstants(io.JsonSerializableClass):
             'layer_units': layer_units,
             'activation': 'ReLU',
             'use_out_bn': False,
-            'use_bn': True
+            'use_bn': False
         }
         return mlp_const
 
@@ -44,7 +45,7 @@ class OneToAllConstants(io.JsonSerializableClass):
             'layer_units': layer_units,
             'activation': 'ReLU',
             'use_out_bn': False,
-            'use_bn': True
+            'use_bn': False
         }
         return mlp_const
 
@@ -55,21 +56,31 @@ class OneToAll(nn.Module,io.WritableToFile):
         self.const = copy.deepcopy(const)
         self.one_to_all_mlps = {}
         for factor, feat_dim in self.const.feat_dims.items():
-            mlp_const = self.const.one_to_all_mlp_const(feat_dim)
-            self.one_to_all_mlps[factor] = pytorch_layers.create_mlp(mlp_const)
+            if factor=='word_vector' and self.const.make_identity==True:
+                self.one_to_all_mlps[factor] = pytorch_layers.Identity()
+            else:
+                mlp_const = self.const.one_to_all_mlp_const(feat_dim)
+                self.one_to_all_mlps[factor] = \
+                    pytorch_layers.create_mlp(mlp_const)
             self.add_module(f'one_to_all_{factor}',self.one_to_all_mlps[factor])
         
         self.all_to_one_mlps = {}
         for factor, feat_dim in self.const.feat_dims.items():
             if factor!='word_vector':
                 continue
-            mlp_const = self.const.all_to_one_mlp_const(feat_dim)
-            self.all_to_one_mlps[factor] = pytorch_layers.create_mlp(mlp_const)
+
+            if factor=='word_vector' and self.const.make_identity==True:
+                self.all_to_one_mlps[factor] = pytorch_layers.Identity()
+            else:
+                mlp_const = self.const.all_to_one_mlp_const(feat_dim)
+                self.all_to_one_mlps[factor] = \
+                    pytorch_layers.create_mlp(mlp_const)
             self.add_module(f'all_to_one_{factor}',self.all_to_one_mlps[factor])
 
-        self.verb_vecs = self.create_verb_vecs(
-            self.const.num_verbs,
-            self.const.verb_vec_dim)
+        if self.const.use_coupling_variable==True:
+            self.verb_vecs = self.create_verb_vecs(
+                self.const.num_verbs,
+                self.const.verb_vec_dim)
 
     def create_verb_vecs(
             self,
