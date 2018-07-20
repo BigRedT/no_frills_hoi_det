@@ -16,14 +16,15 @@ class OneToAllConstants(io.JsonSerializableClass):
             'verb_given_human_pose': 368,
             'word_vector': 300,
         }
-        self.verb_vec_dim = 300
+        self.verb_vec_dim = 5
         self.num_verbs = 117
-        self.use_coupling_variable = True
+        self.use_coupling_variable = False
         self.make_identity = False
+        self.num_hidden_layers = 0
 
     def one_to_all_mlp_const(self,feat_dim):
         in_dim = self.verb_vec_dim
-        layer_units = [in_dim]*0
+        layer_units = [in_dim]*self.num_hidden_layers
         mlp_const = {
             'in_dim': in_dim,
             'out_dim': feat_dim,
@@ -37,7 +38,7 @@ class OneToAllConstants(io.JsonSerializableClass):
 
     def all_to_one_mlp_const(self,feat_dim):
         in_dim = feat_dim
-        layer_units = [in_dim]*0
+        layer_units = [in_dim]*self.num_hidden_layers
         mlp_const = {
             'in_dim': in_dim,
             'out_dim': self.verb_vec_dim,
@@ -128,7 +129,7 @@ class OneToAll(nn.Module,io.WritableToFile):
         total_loss = 0
         for factor, pred_feat in pred_feats.items():
             feat = feats[factor]
-            losses[factor] = self.l2_loss(pred_feat,feat)
+            losses[factor] = self.l1_loss(pred_feat,feat)
             total_loss += losses[factor]
         losses['total'] = total_loss
         return losses
@@ -142,7 +143,7 @@ class OneToAll(nn.Module,io.WritableToFile):
         losses = {}
         total_loss = 0
         for factor, pred_verb_vec in pred_verb_vecs.items():
-            losses[factor] = self.l2_loss(pred_verb_vec,verb_vecs)
+            losses[factor] = self.l1_loss(pred_verb_vec,verb_vecs)
             total_loss += losses[factor]
         losses['total'] = total_loss
         return losses

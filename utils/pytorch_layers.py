@@ -30,6 +30,12 @@ def get_activation(name):
 def create_mlp(const):
     out_activation = get_activation(const['out_activation'])
     activation = get_activation(const['activation'])
+    
+    if 'drop_prob' in const:
+        drop_prob = const['drop_prob']
+    else:
+        drop_prob = 0
+
     mlp = MLP(
         in_dim=const['in_dim'],
         out_dim=const['out_dim'],
@@ -37,7 +43,8 @@ def create_mlp(const):
         activation=activation,
         layer_units=const['layer_units'],
         use_out_bn=const['use_out_bn'],
-        use_bn=const['use_bn'])
+        use_bn=const['use_bn'],
+        drop_prob=drop_prob)
     return mlp
 
 class MLP(nn.Module):
@@ -49,7 +56,8 @@ class MLP(nn.Module):
             layer_units=[],
             activation=nn.ReLU(inplace=True),
             use_out_bn=True,
-            use_bn=True):
+            use_bn=True,
+            drop_prob=0):
         super(MLP,self).__init__()
         self.layers = nn.ModuleList()
         in_units = in_dim 
@@ -61,6 +69,8 @@ class MLP(nn.Module):
                 activation,
                 use_bn)
             self.layers.append(fc_layer)
+            if drop_prob > 0:
+                self.layers.append(nn.Dropout(p=drop_prob))
             in_units = out_units
 
         fc_layer = self.linear_with_bn_and_activations(
@@ -90,3 +100,10 @@ class MLP(nn.Module):
             x = layer(x)
 
         return x
+
+
+def adjust_learning_rate(optimizer, init_lr, epoch, decay_by=0.2, decay_every=10):
+    """Sets the learning rate to the initial LR decayed by 10 every 30 epochs"""
+    lr = init_lr * (decay_by ** (epoch // decay_every))
+    for param_group in optimizer.param_groups:
+        param_group['lr'] = lr

@@ -23,7 +23,7 @@ def eval_model(model,dataset,exp_const):
     print('Creating hdf5 file for predicted hoi dets ...')
     pred_hoi_dets_hdf5 = os.path.join(
         exp_const.exp_dir,
-        f'pred_hoi_dets_{dataset.const.subset}_{model.const.model_num}.hdf5')
+        f'pred_feats_pred_hoi_dets_{dataset.const.subset}_{model.const.model_num}.hdf5')
     pred_hois = h5py.File(pred_hoi_dets_hdf5,'w')
     model.hoi_classifier.eval()
     sampler = SequentialSampler(dataset)
