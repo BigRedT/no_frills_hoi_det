@@ -1,9 +1,9 @@
 #!/bin/bash
 SUBSET="test"
 HICO_EXP_DIR="${PWD}/data_symlinks/hico_exp"
-EXP_NAME="hoi_embedder/verb_vec_init_glove_finetune_False_dim_300"
+EXP_NAME="fp_to_tp_ablation/fp_to_tp_ratio_10"
 echo $EXP_NAME
-MODEL_NUM="70000"
+MODEL_NUM="25000"
 PRED_HOI_DETS_HDF5="${HICO_EXP_DIR}/${EXP_NAME}/pred_hoi_dets_${SUBSET}_${MODEL_NUM}.hdf5"
 OUT_DIR="${HICO_EXP_DIR}/${EXP_NAME}/mAP_eval/${SUBSET}_${MODEL_NUM}"
 PROC_DIR="${PWD}/data_symlinks/hico_processed"

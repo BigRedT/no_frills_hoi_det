@@ -290,6 +290,64 @@ def exp_train():
     train.main(exp_const,data_const,model_const)
 
 
+def exp_fp_to_tp_ablation():
+    args = parser.parse_args()
+    not_specified_args = manage_required_args(
+        args,
+        parser,
+        required_args=['imgs_per_batch','fp_to_tp_ratio'])
+
+    exp_name = f'fp_to_tp_ratio_{args.fp_to_tp_ratio}'
+    
+    out_base_dir = os.path.join(
+        os.getcwd(),
+        'data_symlinks/hico_exp/fp_to_tp_ablation')
+    exp_const = ExpConstants(
+        exp_name=exp_name,
+        out_base_dir=out_base_dir)
+    exp_const.log_dir = os.path.join(exp_const.exp_dir,'log')
+    exp_const.model_dir = os.path.join(exp_const.exp_dir,'models')
+    exp_const.num_epochs = 10
+    exp_const.imgs_per_batch = args.imgs_per_batch
+    exp_const.lr = 1e-3
+
+    data_const = FeatureConstants()
+    hoi_cand_dir = os.path.join(
+        os.getcwd(),
+        'data_symlinks/hico_exp/hoi_candidates')
+    data_const.hoi_cands_hdf5 = os.path.join(
+        hoi_cand_dir,
+        'hoi_candidates_train_val.hdf5')
+    data_const.box_feats_hdf5 = os.path.join(
+        hoi_cand_dir,
+        'hoi_candidates_box_feats_train_val.hdf5')
+    data_const.hoi_cand_labels_hdf5 = os.path.join(
+        hoi_cand_dir,
+        'hoi_candidate_labels_train_val.hdf5')
+    # data_const.human_cand_pose_hdf5 = os.path.join(
+    #     hoi_cand_dir,
+    #     'human_candidates_pose_train_val.hdf5')
+    data_const.human_pose_feats_hdf5 = os.path.join(
+        hoi_cand_dir,
+        'human_pose_feats_train_val.hdf5')
+    data_const.faster_rcnn_feats_hdf5 = os.path.join(
+        data_const.proc_dir,
+        'faster_rcnn_fc7.hdf5')
+    data_const.fp_to_tp_ratio = args.fp_to_tp_ratio
+    data_const.subset = None # to be set in the train_balanced.py script
+    
+    model_const = Constants()
+    model_const.hoi_classifier = HoiClassifierConstants()
+    model_const.hoi_classifier.verb_given_appearance = True
+    model_const.hoi_classifier.verb_given_human_appearance = False
+    model_const.hoi_classifier.verb_given_object_appearance = False
+    model_const.hoi_classifier.verb_given_boxes_and_object_label = True
+    model_const.hoi_classifier.verb_given_human_pose = False
+    model_const.hoi_classifier.rcnn_det_prob = True
+
+    train.main(exp_const,data_const,model_const)
+
+
 def exp_eval():
     args = parser.parse_args()
     not_specified_args = manage_required_args(
@@ -357,6 +415,60 @@ def exp_eval():
     model_const.hoi_classifier.verb_given_boxes_and_object_label = args.verb_given_boxes_and_object_label
     model_const.hoi_classifier.verb_given_human_pose = args.verb_given_human_pose
     model_const.hoi_classifier.rcnn_det_prob = args.rcnn_det_prob
+    model_const.hoi_classifier.model_pth = os.path.join(
+        exp_const.model_dir,
+        f'hoi_classifier_{model_const.model_num}')
+    evaluate.main(exp_const,data_const,model_const)
+
+
+def exp_eval_fp_to_tp_ablation():
+    args = parser.parse_args()
+    not_specified_args = manage_required_args(
+        args,
+        parser,
+        required_args=['model_num','fp_to_tp_ratio'])
+
+    exp_name = f'fp_to_tp_ratio_{args.fp_to_tp_ratio}'
+
+    out_base_dir = os.path.join(
+        os.getcwd(),
+        'data_symlinks/hico_exp/fp_to_tp_ablation')
+    exp_const = ExpConstants(
+        exp_name=exp_name,
+        out_base_dir=out_base_dir)
+    exp_const.model_dir = os.path.join(exp_const.exp_dir,'models')
+
+    data_const = FeatureConstants()
+    hoi_cand_dir = os.path.join(
+        os.getcwd(),
+        'data_symlinks/hico_exp/hoi_candidates')
+    data_const.hoi_cands_hdf5 = os.path.join(
+        hoi_cand_dir,
+        'hoi_candidates_test.hdf5')
+    data_const.box_feats_hdf5 = os.path.join(
+        hoi_cand_dir,
+        'hoi_candidates_box_feats_test.hdf5')
+    data_const.hoi_cand_labels_hdf5 = os.path.join(
+        hoi_cand_dir,
+        'hoi_candidate_labels_test.hdf5')
+    data_const.human_pose_feats_hdf5 = os.path.join(
+        hoi_cand_dir,
+        'human_pose_feats_test.hdf5')
+    data_const.faster_rcnn_feats_hdf5 = os.path.join(
+        data_const.proc_dir,
+        'faster_rcnn_fc7.hdf5')
+    data_const.balanced_sampling = False
+    data_const.subset = 'test' 
+    
+    model_const = Constants()
+    model_const.model_num = args.model_num
+    model_const.hoi_classifier = HoiClassifierConstants()
+    model_const.hoi_classifier.verb_given_appearance = True
+    model_const.hoi_classifier.verb_given_human_appearance = False
+    model_const.hoi_classifier.verb_given_object_appearance = False
+    model_const.hoi_classifier.verb_given_boxes_and_object_label = True
+    model_const.hoi_classifier.verb_given_human_pose = False
+    model_const.hoi_classifier.rcnn_det_prob = True
     model_const.hoi_classifier.model_pth = os.path.join(
         exp_const.model_dir,
         f'hoi_classifier_{model_const.model_num}')
