@@ -33,6 +33,7 @@ class HoiClassifierConstants(io.JsonSerializableClass):
         self.verb_given_boxes_and_object_label = True
         self.verb_given_human_pose = True
         self.rcnn_det_prob = True
+        self.use_prob_mask = True
         self.scatter_verbs_to_hois = ScatterVerbsToHoisConstants()
 
     @property
@@ -115,9 +116,10 @@ class HoiClassifier(nn.Module,io.WritableToFile):
         }
 
         prob_vec['hoi'] = \
-            feats['prob_mask'] * \
             prob_vec['human'] * \
             prob_vec['object'] * \
             prob_vec['verb']
+        if self.const.use_prob_mask:
+            prob_vec['hoi'] = prob_vec['hoi'] * feats['prob_mask']
 
         return prob_vec, factor_scores
