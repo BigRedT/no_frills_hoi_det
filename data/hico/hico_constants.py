@@ -38,6 +38,8 @@ class HicoConstants(io.JsonSerializableClass):
         self.hoi_cls_count_json = os.path.join(self.proc_dir,'hoi_cls_count.json')
         self.bin_to_hoi_ids_json = os.path.join(self.proc_dir,'bin_to_hoi_ids.json')
 
+        self.faster_rcnn_boxes = os.path.join(self.proc_dir,'faster_rcnn_boxes')
+
 
 class HicoBoxesConstants(HicoConstants):
     def __init__(
