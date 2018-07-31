@@ -1,3 +1,4 @@
+import os
 import h5py
 import copy
 import itertools
@@ -6,6 +7,7 @@ from torch.utils.data import Dataset
 
 import utils.io as io
 from utils.constants import Constants
+from exp.detect_coco_objects.coco_classes import COCO_CLASSES
 from data.hico.hico_constants import HicoConstants
 from exp.hoi_classifier.data.pose_features import PoseFeatures
 
@@ -23,6 +25,7 @@ class FeatureConstants(HicoConstants,io.JsonSerializableClass):
         self.balanced_sampling = True
         self.fp_to_tp_ratio = 1000
         self.subset = 'train'
+        self.all_object_class_scores = False
 
 
 class Features(Dataset):
@@ -39,6 +42,7 @@ class Features(Dataset):
         self.obj_to_id = self.get_obj_to_id(self.const.object_list_json)
         self.verb_to_id = self.get_verb_to_id(self.const.verb_list_json)
         self.anno_dict = self.get_anno_dict(self.const.anno_list_json)
+        self.obj_to_coco_id = {k:v for k,v in zip(COCO_CLASSES,range(len(COCO_CLASSES)))} 
         if self.const.box_feats_hdf5:
             self.box_feats = self.load_hdf5_file(self.const.box_feats_hdf5)
         if self.const.human_cand_pose_hdf5:
@@ -170,6 +174,26 @@ class Features(Dataset):
         im_wh[:,1] = im_wh[:,1]*h
         return im_wh
 
+    def get_obj_prob_vec(
+            self,
+            global_id,
+            object_rpn_id):
+        scores_npy = os.path.join(
+            self.const.faster_rcnn_boxes,
+            f'{global_id}_scores.npy')
+        scores = np.load(scores_npy)
+        scores = scores[object_rpn_id,:]
+        num_hois = len(self.hoi_dict)
+        gather_ids = np.zeros([num_hois],dtype=np.int)
+        for obj, obj_hoi_ids in self.obj_to_hoi_ids.items():
+            obj_idx = self.obj_to_coco_id[' '.join(obj.split('_'))]
+            #obj_idx = int(self.obj_to_id[obj])-1
+            obj_hoi_idx = [int(v)-1 for v in obj_hoi_ids]
+            gather_ids[obj_hoi_idx] = obj_idx
+        obj_prob_vec = scores[:,gather_ids]
+        return obj_prob_vec
+
+
     def __getitem__(self,i):
         global_id = self.global_ids[i]
 
@@ -253,6 +277,10 @@ class Features(Dataset):
             to_return['hoi_id'], 
             to_return['human_prob'],
             to_return['object_prob'])
+        if self.const.all_object_class_scores is True:
+            object_prob_vecs = self.get_obj_prob_vec(
+                global_id,
+                to_return['object_rpn_id'])
         to_return['human_prob_vec'] = human_prob_vecs
         to_return['object_prob_vec'] = object_prob_vecs
         to_return['object_one_hot'] = self.get_obj_one_hot(to_return['hoi_id'])
