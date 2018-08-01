@@ -15,6 +15,7 @@ class VerbGivenHumanPoseConstants(io.JsonSerializableClass):
         self.use_relative_pose = True
         self.num_objects = 80
         self.num_verbs = 117
+        self.use_object_label = True
 
     @property
     def mlp_const(self):
@@ -54,6 +55,10 @@ class VerbGivenHumanPose(nn.Module,io.WritableToFile):
             relative_pose = feats['relative_pose']
         pose_feats = torch.cat((absolute_pose,relative_pose),1)
         transformed_box_feats = self.transform_feat(pose_feats)
-        in_feat = torch.cat((transformed_box_feats,feats['object_one_hot']),1)
+        if self.const.use_object_label is True:
+            object_label = feats['object_one_hot']
+        else:
+            object_label = 0*feats['object_one_hot']
+        in_feat = torch.cat((transformed_box_feats,object_label),1)
         factor_scores = self.mlp(in_feat)
         return factor_scores
