@@ -1,7 +1,7 @@
 #!/bin/bash
 SUBSET="test"
 HICO_EXP_DIR="${PWD}/data_symlinks/hico_exp"
-EXP_NAME="mask_ablation/use_mask_False"
+EXP_NAME="object_label_ablation2/object_label_False"
 echo $EXP_NAME
 MODEL_NUM="25000"
 PRED_HOI_DETS_HDF5="${HICO_EXP_DIR}/${EXP_NAME}/pred_hoi_dets_${SUBSET}_${MODEL_NUM}.hdf5"
