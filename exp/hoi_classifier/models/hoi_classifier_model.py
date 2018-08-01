@@ -34,6 +34,8 @@ class HoiClassifierConstants(io.JsonSerializableClass):
         self.verb_given_human_pose = True
         self.rcnn_det_prob = True
         self.use_prob_mask = True
+        self.use_object_label = True
+        self.use_log_feat = True
         self.scatter_verbs_to_hois = ScatterVerbsToHoisConstants()
 
     @property
@@ -82,6 +84,11 @@ class HoiClassifier(nn.Module,io.WritableToFile):
             self.create_factor(name,const)
 
     def create_factor(self,factor_name,factor_const):
+        if factor_name in ['verb_given_boxes_and_object_label',\
+            'verb_given_human_pose']:
+            factor_const.use_object_label = self.const.use_object_label
+        if factor_name in ['verb_given_boxes_and_object_label']:
+            factor_const.use_log_feat = self.const.use_log_feat
         factor = self.FACTOR_NAME_TO_MODULE[factor_name](factor_const)
         setattr(self,factor_name,factor)
 
