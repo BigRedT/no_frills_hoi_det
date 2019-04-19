@@ -33,9 +33,7 @@ def split(global_ids,val_frac):
 
 
 def main():
-    data_const = HicoConstants(
-        clean_dir='/home/ssd/hico_det_clean_20160224',
-        proc_dir='/home/ssd/hico_det_processed_20160224')
+    data_const = HicoConstants()
 
     hico_list = io.load_json_object(data_const.anno_list_json)
     global_ids = [anno['global_id'] for anno in hico_list]
