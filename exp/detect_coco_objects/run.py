@@ -1,20 +1,16 @@
 import exp.detect_coco_objects.evaluate_boxes as evaluate_boxes
 import exp.detect_coco_objects.prepare_data_for_faster_rcnn as prepare_data_for_faster_rcnn
 import exp.detect_coco_objects.select_confident_boxes as select_confident_boxes
-from data.hico.hico_constants import HicoBoxesConstants
+from data.hico.hico_constants import HicoConstants
 from exp.experimenter import *
 from utils.constants import ExpConstants
 
 
 def exp_detect_coco_objects_in_hico():
     exp_name = 'detect_coco_objects_in_hico'
-    exp_const = ExpConstants(
-        exp_name=exp_name,
-        out_base_dir='/home/tanmay/Data/weakly_supervised_hoi_exp')
+    exp_const = ExpConstants(exp_name=exp_name)
     
-    data_const = HicoBoxesConstants(
-        clean_dir='/home/ssd/hico_det_clean_20160224',
-        proc_dir='/home/ssd/hico_det_processed_20160224')
+    data_const = HicoConstants()
 
     prepare_data_for_faster_rcnn.prepare_hico(exp_const,data_const)
 
@@ -38,9 +34,9 @@ def exp_select_and_evaluate_confident_boxes_in_hico():
             exp_const.human_score_thresh = human_score_thresh
             exp_const.object_score_thresh = object_score_thresh
             
-            #select_confident_boxes.select(exp_const,data_const)
+            select_confident_boxes.select(exp_const,data_const)
             #evaluate_boxes.evaluate_boxes(exp_const,data_const)
-            evaluate_boxes.evaluate_boxes_and_labels(exp_const,data_const)
+            #evaluate_boxes.evaluate_boxes_and_labels(exp_const,data_const)
 
 if __name__=='__main__':
     list_exps(globals())
