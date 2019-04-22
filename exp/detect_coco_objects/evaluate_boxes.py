@@ -194,13 +194,7 @@ def box_label_recall(gt_hois,human_boxes,object_boxes,object_labels,iou_thresh,h
 
     
 def evaluate_boxes(exp_const,data_const):
-    select_boxes_dir = os.path.join(
-        exp_const.exp_dir,
-        f'select_boxes_' + \
-        f'human_thresh_{exp_const.human_score_thresh}_' + \
-        f'max_{exp_const.max_humans}_' + \
-        f'object_thresh_{exp_const.object_score_thresh}_' + \
-        f'max_{exp_const.max_objects_per_class}')
+    select_boxes_dir = exp_const.exp_dir
 
     select_boxes_h5py = os.path.join(
         select_boxes_dir,
@@ -291,22 +285,13 @@ def evaluate_boxes(exp_const,data_const):
 
     evaluation_stats_json = os.path.join(
         exp_const.exp_dir,
-        f'eval_stats_boxes_' + \
-        f'human_thresh_{exp_const.human_score_thresh}_' + \
-        f'max_{exp_const.max_humans}_' + \
-        f'object_thresh_{exp_const.object_score_thresh}_' + \
-        f'max_{exp_const.max_objects_per_class}.json')
+        f'eval_stats_boxes.json')
+
     io.dump_json_object(evaluation_stats,evaluation_stats_json)
     
 
 def evaluate_boxes_and_labels(exp_const,data_const):
-    select_boxes_dir = os.path.join(
-        exp_const.exp_dir,
-        f'select_boxes_' + \
-        f'human_thresh_{exp_const.human_score_thresh}_' + \
-        f'max_{exp_const.max_humans}_' + \
-        f'object_thresh_{exp_const.object_score_thresh}_' + \
-        f'max_{exp_const.max_objects_per_class}')
+    select_boxes_dir = exp_const.exp_dir
 
     select_boxes_h5py = os.path.join(
         select_boxes_dir,
@@ -340,12 +325,6 @@ def evaluate_boxes_and_labels(exp_const,data_const):
             num_images += 1
         else:
             continue
-            #num_images += 1
-
-        # selected_dets_npy = os.path.join(
-        #     select_boxes_dir,
-        #     f'{global_id}_selected_dets.npy')
-        # selected_dets = np.load(selected_dets_npy)[()]
 
         boxes_scores_rpn_ids = select_boxes[global_id]['boxes_scores_rpn_ids'][()]
         start_end_ids = select_boxes[global_id]['start_end_ids'][()]
@@ -401,11 +380,9 @@ def evaluate_boxes_and_labels(exp_const,data_const):
         evaluation_stats['average_object_proposals_per_image']
     evaluation_stats['index_error_misses'] = index_error_misses
 
+
     evaluation_stats_json = os.path.join(
         exp_const.exp_dir,
-        f'eval_stats_boxes_labels_' + \
-        f'human_thresh_{exp_const.human_score_thresh}_' + \
-        f'max_{exp_const.max_humans}_' + \
-        f'object_thresh_{exp_const.object_score_thresh}_' + \
-        f'max_{exp_const.max_objects_per_class}.json')
+        f'eval_stats_boxes_labels.json')
+
     io.dump_json_object(evaluation_stats,evaluation_stats_json)
