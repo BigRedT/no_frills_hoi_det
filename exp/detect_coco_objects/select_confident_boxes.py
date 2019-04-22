@@ -94,14 +94,7 @@ def select_dets(
 def select(exp_const,data_const):
     io.mkdir_if_not_exists(exp_const.exp_dir)
     
-    select_boxes_dir = os.path.join(
-        exp_const.exp_dir,
-        f'select_boxes_' + \
-        f'human_thresh_{exp_const.human_score_thresh}_' + \
-        f'max_{exp_const.max_humans}_' + \
-        f'object_thresh_{exp_const.object_score_thresh}_' + \
-        f'max_{exp_const.max_objects_per_class}')
-    io.mkdir_if_not_exists(select_boxes_dir)
+    select_boxes_dir = exp_const.exp_dir
 
     # Print where the boxes are coming from and where the output is written
     print(f'Boxes will be read from: {data_const.faster_rcnn_boxes}')
