@@ -104,3 +104,26 @@ As shown in the table below, our run resulted on average 6 human and 94 object (
 | Human Recall | 86% | 89% |
 | Object Recall | 70% | 86% |
 | Connection / Pair Recall | 59% | 77% | 
+
+# Train HOI classifier
+
+## Step 1: Generate HOI candidates from object candidates and cache Box and Pose features
+We provide a simple bash script for this:
+```
+bash exp/hoi_classifier/scripts/preprocess.sh
+```
+This generates the following files in `hico_exp/hoi_candidates` directory:
+- `hoi_candidates_<subset>.hdf5` : Box pair candidates. More details [here](exp/hoi_classifier/data/data_description.md)
+- `hoi_candidate_labels_<subset>.hdf5` : Binary labels for hoi candidates to be used during training
+- `hoi_candidates_box_feats_<subset>.hdf5` : Cached Box features
+- `hoi_candidates_pose_<subset>.hdf5` : Pose keypoints assigned to human bounding boxes
+- `hoi_candidates_pose_feats_<subset>.hdf5` : Cached Pose features
+
+## Step 2: Train the model
+
+Modify flags in `exp/hoi_classifier/scripts/train.sh` as required and run:
+```
+bash bash exp/hoi_classifier/scripts/train.sh <GPU ID>
+```
+`<GPU ID>` specifies the GPU to use for training the model.
+
