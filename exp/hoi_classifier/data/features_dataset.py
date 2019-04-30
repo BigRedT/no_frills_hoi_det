@@ -7,24 +7,42 @@ from torch.utils.data import Dataset
 
 import utils.io as io
 from utils.constants import Constants
-from exp.detect_coco_objects.coco_classes import COCO_CLASSES
+from data.coco_classes import COCO_CLASSES
 from data.hico.hico_constants import HicoConstants
-from exp.hoi_classifier.data.pose_features import PoseFeatures
 
 
 class FeatureConstants(HicoConstants,io.JsonSerializableClass):
-    def __init__(self):
-        super(FeatureConstants,self).__init__()
-        self.hoi_cands_hdf5 = None
-        self.hoi_cand_labels_hdf5 = None
-        self.faster_rcnn_feats_hdf5 = None
-        self.box_feats_hdf5 = None
-        self.human_cand_pose_hdf5 = None
-        self.human_pose_feats_hdf5 = None
+    def __init__(
+            self,
+            subset,
+            clean_dir=os.path.join(os.getcwd(),'data_symlinks/hico_clean'),
+            proc_dir=os.path.join(os.getcwd(),'data_symlinks/hico_processed'),
+            hoi_cand_dir=os.path.join(
+                os.getcwd(),
+                'data_symlinks/hico_exp/hoi_candidates')):
+        super(FeatureConstants,self).__init__(
+            clean_dir=clean_dir,
+            proc_dir=proc_dir)
+        self.subset = subset
+        self.hoi_cand_dir = hoi_cand_dir
+        self.hoi_cands_hdf5 = os.path.join(
+            self.hoi_cand_dir,
+            f'hoi_candidates_{subset}.hdf5')
+        self.hoi_cand_labels_hdf5 = os.path.join(
+            self.hoi_cand_dir,
+            f'hoi_candidate_labels_{subset}.hdf5')
+        self.faster_rcnn_feats_hdf5 = os.path.join(
+            self.proc_dir,
+            'faster_rcnn_fc7.hdf5')
+        self.box_feats_hdf5 = os.path.join(
+            self.hoi_cand_dir,
+            f'hoi_candidates_box_feats_{subset}.hdf5')
+        self.human_pose_feats_hdf5 = os.path.join(
+            self.hoi_cand_dir,
+            f'human_pose_feats_{subset}.hdf5')
         self.num_pose_keypoints = 18
         self.balanced_sampling = True
         self.fp_to_tp_ratio = 1000
-        self.subset = 'train'
         self.all_object_class_scores = False
 
 
@@ -42,14 +60,10 @@ class Features(Dataset):
         self.obj_to_id = self.get_obj_to_id(self.const.object_list_json)
         self.verb_to_id = self.get_verb_to_id(self.const.verb_list_json)
         self.anno_dict = self.get_anno_dict(self.const.anno_list_json)
-        self.obj_to_coco_id = {k:v for k,v in zip(COCO_CLASSES,range(len(COCO_CLASSES)))} 
+        self.obj_to_coco_id = {
+            k:v for k,v in zip(COCO_CLASSES,range(len(COCO_CLASSES)))} 
         if self.const.box_feats_hdf5:
             self.box_feats = self.load_hdf5_file(self.const.box_feats_hdf5)
-        if self.const.human_cand_pose_hdf5:
-            self.human_cand_pose = self.load_hdf5_file(
-                self.const.human_cand_pose_hdf5)
-            self.pose_feat_computer = PoseFeatures(
-                num_keypts=self.const.num_pose_keypoints)
         if self.const.human_pose_feats_hdf5:
             self.human_pose_feat = self.load_hdf5_file(
                 self.const.human_pose_feats_hdf5)
@@ -159,13 +173,6 @@ class Features(Dataset):
         prob_mask = np.zeros([num_cand,len(self.hoi_dict)])
         prob_mask[np.arange(num_cand),hoi_idx] = 1.0
         return prob_mask
-    
-    def get_rpn_id_to_pose(self,global_id):
-        rpn_id_to_pose = {}
-        rpn_id_to_pose_ = self.human_cand_pose[global_id]
-        for hoi_id in rpn_id_to_pose_.keys():
-            rpn_id_to_pose[hoi_id] = rpn_id_to_pose_[hoi_id][()]
-        return rpn_id_to_pose
 
     def get_im_wh(self,global_id,num_cand):
         h,w = self.anno_dict[global_id]['image_size'][:2]
@@ -261,17 +268,6 @@ class Features(Dataset):
             self.faster_rcnn_feats[global_id],
             to_return['object_rpn_id'],
             axis=0)
-        # if self.const.human_cand_pose_hdf5:
-        #     to_return['absolute_pose'] = absolute_pose_feat
-        #     to_return['relative_pose'] = relative_pose_feat
-            # pose_feats = self.pose_feat_computer.compute_pose_feats(
-            #     to_return['human_box'],
-            #     to_return['object_box'],
-            #     to_return['human_rpn_id'],
-            #     self.get_rpn_id_to_pose(to_return['global_id']),
-            #     self.get_im_wh(to_return['global_id'],to_return['human_box'].shape[0]))
-            # to_return['absolute_pose'] = pose_feats['absolute_pose']
-            # to_return['relative_pose'] = pose_feats['relative_pose']
 
         human_prob_vecs, object_prob_vecs = self.get_faster_rcnn_prob_vecs(
             to_return['hoi_id'], 
