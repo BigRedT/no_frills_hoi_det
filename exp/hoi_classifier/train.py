@@ -148,13 +148,16 @@ def eval_model(model,dataset,exp_const,num_samples):
     return val_loss
 
 
-def main(exp_const,data_const,model_const):
+def main(exp_const,data_const_train,data_const_val,model_const):
     io.mkdir_if_not_exists(exp_const.exp_dir,recursive=True)
     io.mkdir_if_not_exists(exp_const.log_dir)
     io.mkdir_if_not_exists(exp_const.model_dir)
     configure(exp_const.log_dir)
-    save_constants(
-        {'exp':exp_const,'data':data_const,'model':model_const},
+    save_constants({
+            'exp':exp_const,
+            'data_train':data_const_train,
+            'data_val':data_const_val,
+            'model':model_const},
         exp_const.exp_dir)
 
     print('Creating model ...')
@@ -164,13 +167,8 @@ def main(exp_const,data_const,model_const):
     model.to_txt(exp_const.exp_dir,single_file=True)
 
     print('Creating data loaders ...')
-    data_const.subset = 'train'
-    data_const.balanced_sampling = True
-    dataset_train = Features(data_const)
-
-    data_const.subset = 'val'
-    data_const.balanced_sampling = True #False
-    dataset_val = Features(data_const)
+    dataset_train = Features(data_const_train)
+    dataset_val = Features(data_const_val)
 
     train_model(model,dataset_train,dataset_val,exp_const)
 
