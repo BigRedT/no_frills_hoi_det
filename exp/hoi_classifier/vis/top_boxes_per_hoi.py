@@ -231,7 +231,7 @@ def main(exp_const,data_const,model_const):
     hoi_dict = {hoi['id']: hoi for hoi in hoi_list}
 
     print('Creating visualization images ...')
-    vis_dir = os.path.join(exp_const.exp_dir,'vis/top_boxes_per_hoi_wo_inference')
+    vis_dir = os.path.join(exp_const.exp_dir,'vis/top_boxes_per_hoi')
     create_html(
         top_boxes,
         anno_dict,
