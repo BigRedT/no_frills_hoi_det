@@ -4,11 +4,11 @@ import numpy as np
 from tqdm import tqdm
 
 import utils.io as io
-from data.hico.hico_constants import HicoBoxesConstants
+from data.hico.hico_constants import HicoConstants
 
 
 def main():
-    data_const = HicoBoxesConstants()
+    data_const = HicoConstants()
     anno_list = io.load_json_object(data_const.anno_list_json)
     global_ids = [anno['global_id'] for anno in anno_list]
     feats_hdf5 = os.path.join(data_const.proc_dir,'faster_rcnn_fc7.hdf5')
