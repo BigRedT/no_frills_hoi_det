@@ -1,15 +1,33 @@
 # No-Frills Human-Object Interaction Detection: Factorization, Layout Encodings, and Training Techniques
 By [Tanmay Gupta](http://tanmaygupta.info), [Alexander Schwing](http://alexander-schwing.de), and [Derek Hoiem](http://dhoiem.cs.illinois.edu)
-[[arXiv](https://arxiv.org/abs/1811.05967)]
 
 <p align="center">
     <img src="imgs/teaser_wide.png">
 </p>
 
+HOI Detection model with strong performance on the challenging HICO-Det benchmark...that too without any frills!
+- Only uses appearance features from an off-the-shelf object detector (Faster-RCNN pretrained on MS-COCO)
+- Only uses hand coded layout encodings constructed from detected bounding boxes and human pose keypoints (pretrained OpenPose)
+- Modest network architecture with light-weight multi-layer perceptrons operating on the appearance and layout features mentioned above
+- No attention mechanisms
+- No fine-tuning object/pose detector
+- No multi-task learning 
+
+**Available on Arxiv:** [https://arxiv.org/abs/1811.05967](https://arxiv.org/abs/1811.05967)
+
+**BibTex**:
+```
+@article{gupta2018nofrills,
+  title={No-Frills Human-Object Interaction Detection: Factorization, Layout Encodings, and Training Techniques},
+  author={Gupta, Tanmay and Schwing, Alexander and Hoiem, Derek},
+  journal={arXiv preprint arXiv:1811.05967},
+  year={2018}
+}
+```
 
 # Requirements
 
-All dependencies will be installed in a python 3 virtual environment. 
+All dependencies will be installed in a python3 virtual environment. 
 
 ## Step 1: Create a python virtual environment
 
