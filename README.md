@@ -5,17 +5,24 @@ By [Tanmay Gupta](http://tanmaygupta.info), [Alexander Schwing](http://alexander
     <img src="imgs/teaser_wide.png">
 </p>
 
-HOI Detection model with strong performance on the challenging HICO-Det benchmark...that too without any frills!
-- Only uses appearance features from an off-the-shelf object detector (Faster-RCNN pretrained on MS-COCO)
-- Only uses hand coded layout encodings constructed from detected bounding boxes and human pose keypoints (pretrained OpenPose)
-- Modest network architecture with light-weight multi-layer perceptrons operating on the appearance and layout features mentioned above
-- No attention mechanisms
-- No fine-tuning object/pose detector
-- No multi-task learning 
+This repository provides code to train and evaluate an HOI Detection model that demonstrates strong performance on the challenging HICO-Det benchmark...that too without frills!
+
+**Why do we call it a no-frills model?**
+
+We make several simplifications over existing approaches while achieving better performance owing to our choice of factorization, direct encoding and scoring of layout, and improved training techniques. Here are the key simplifications:
+
+- Our model encodes appearance only using features extracted by an off-the-shelf object detector (Faster-RCNN pretrained on MS-COCO)
+- We only use simple hand coded layout encodings constructed from detected bounding boxes and human pose keypoints (pretrained OpenPose)
+- We use a fairly modest network architecture with light-weight multi-layer perceptrons (2-3 fully-connected layers) operating on the appearance and layout features mentioned above
+- No Mixture-Density Network [2] or CNN for encoding Interaction Patterns [1]
+- No multi-task learning [2]
+- No fine-tuning object/pose detector [2]
+- No attention mechanisms for modeling context [3]
+- No message-passing over graphs [4]
 
 **Available on Arxiv:** [https://arxiv.org/abs/1811.05967](https://arxiv.org/abs/1811.05967)
 
-**BibTex**:
+**BibTex:**
 ```
 @article{gupta2018nofrills,
   title={No-Frills Human-Object Interaction Detection: Factorization, Layout Encodings, and Training Techniques},
@@ -24,6 +31,16 @@ HOI Detection model with strong performance on the challenging HICO-Det benchmar
   year={2018}
 }
 ```
+
+**References:**
+
+[1] Chao, Y., Liu, Y., Liu, X., Zeng, H., & Deng, J. (2018). Learning to Detect Human-Object Interactions. 2018 IEEE Winter Conference on Applications of Computer Vision (WACV), 381-389.
+
+[2] Gkioxari, G., Girshick, R.B., Dollár, P., & He, K. (2018). Detecting and Recognizing Human-Object Interactions. 2018 IEEE/CVF Conference on Computer Vision and Pattern Recognition, 8359-8367.
+
+[3] Gao, C., Zou, Y., & Huang, J. (2018). iCAN: Instance-Centric Attention Network for Human-Object Interaction Detection. BMVC.
+
+[4] Qi, S., Wang, W., Jia, B., Shen, J., & Zhu, S. (2018). Learning Human-Object Interactions by Graph Parsing Neural Networks. ECCV.
 
 # Requirements
 
@@ -152,6 +169,8 @@ For each image with unique <global_id> the object detector writes the following 
 
 ### Step 2: Run faster-rcnn
 
+This step requires `faster_rcnn_im_in_out.json` file created in the previous step. I have created a fork of a popular Faster-RCNN pytorch implementation. This fork includes a script that takes the json file and writes the outputs to `hico_processed` in the required format. Please follow installation and execution instructions at [https://github.com/BigRedT/pytorch-faster-rcnn](https://github.com/BigRedT/pytorch-faster-rcnn)
+
 
 ### Step 3: Select candidate boxes for each object category from all predictions
 
@@ -256,7 +275,15 @@ This is done by the `compute_map.sh` script in `exp/hico_eval` directory. Update
 ```
 bash exp/hico_eval/compute_map.sh
 ```
-`EXP_NAME` defaults to `factors_rcnn_det_prob_appearance_boxes_and_object_label_human_pose` which is the model trained with all factors. 
+`EXP_NAME` defaults to `factors_rcnn_det_prob_appearance_boxes_and_object_label_human_pose` which is the model trained with all factors. The APs for each HOI category and overall performance are stored in the experiment directory with a relative path that looks like `mAP_eval/test_<MODEL NUM>/mAP.json`
+
+The mAP for the provided model for various category groups (based on number of training samples) are as follows:
+|Model|Full|Rare|Non-Rare|0-9|10-49|50-99|100-499|500-999|1000-9999|
+|:-|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+|HO-RCNN|7.81|5.37|8.54|-|-|-|-|-|-|
+|InteractNet|9.94|7.16|10.77|-|-|-|-|-|-|
+|iCAN|14.84|10.45|16.15|-|-|-|-|-|-|
+|No-Frills|**17.07**|**11.5**|**18.74**|**11.5**|**11.63**|**14.57**|**21.85**|**25.42**|**41.54**|
 
 ## Step 4: Visualize 
 
