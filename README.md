@@ -1,3 +1,12 @@
+# No-Frills Human-Object Interaction Detection: Factorization, Layout Encodings, and Training Techniques
+By [Tanmay Gupta](http://tanmaygupta.info), [Alexander Schwing](http://alexander-schwing.de), and [Derek Hoiem](http://dhoiem.cs.illinois.edu)
+[[arXiv](https://arxiv.org/abs/1811.05967)]
+
+<p align="center">
+    <img src="imgs/teaser_wide.png">
+</p>
+
+
 # Requirements
 
 All dependencies will be installed in a python 3 virtual environment. 
@@ -150,7 +159,7 @@ As shown in the table below, our run resulted on average 6 human and 94 object (
 | Object Recall | 70% | 86% |
 | Connection / Pair Recall | 59% | 77% | 
 
-# Detect Human Pose (or download the poses we provide)
+# Run Human Pose Detector (or download the poses we provide)
 
 ## Download
 
@@ -232,4 +241,38 @@ bash exp/hico_eval/compute_map.sh
 `EXP_NAME` defaults to `factors_rcnn_det_prob_appearance_boxes_and_object_label_human_pose` which is the model trained with all factors. 
 
 ## Step 4: Visualize 
-[ride_bike](imgs/019_ride_bicycle/index.html)
+
+### Top Ranking Detections
+
+To visualize top ranking detections (as shown below) for each of the 600 HOI categories:
+```
+bash exp/hoi_classifier/scripts/visualize.sh <MODEL NUM>
+```
+This generates `vis/top_boxes_per_hoi_wo_inference/<hoi_id>_<verb>_<object>/` directory for each HOI inside the training experiment directory. Each such directory contains a few .png files and `index.html` that visualizes the .png files when opened in a browser.
+
+#### Top ranking detections for `ride bike` (see `imgs/019_ride_bicycle`)
+![ride_bike_snapshot.png](imgs/ride_bicycle_snapshot.png)
+
+#### Top ranking detections for `lie on couch` (see `imgs/094_lie_on_couch`)
+![lie_on_couch_snapshot.png](imgs/lie_on_couch_snapshot.png)
+
+### Performance distribution
+
+To visualize spread of performance across different interactions with the same object run:
+```
+python -m exp.hoi_classifier.vis.vis_interaction_aps_per_object
+```
+
+![interaction_aps_per_object_snapshot.png](imgs/interaction_aps_per_object_snapshot.png)
+
+An interactive version of the plot is available at `imgs/interaction_aps_per_object.html`.
+
+
+To visualize spread of performance across different objects for the same interaction run:
+```
+python -m exp.hoi_classifier.vis.vis_object_aps_per_interaction
+```
+
+![object_aps_per_interaction_snapshot.png](imgs/object_aps_per_interaction_snapshot.png)
+
+An interactive version of the plot is available at `imgs/object_aps_per_interaction.html`.
