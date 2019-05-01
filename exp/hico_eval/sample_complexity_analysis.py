@@ -11,13 +11,6 @@ parser.add_argument(
     default=None,
     required=True,
     help='Output directory')
-parser.add_argument(
-    '--ap_type', 
-    type=str, 
-    default=None,
-    required=True,
-    choices=['AP','NAP'],
-    help='Type of AP to use')
 
 def compute_mAP(APs,hoi_ids):
     return sum([APs[hoi_id] for hoi_id in hoi_ids]) / len(hoi_ids)

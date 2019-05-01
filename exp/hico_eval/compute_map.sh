@@ -15,5 +15,4 @@ python -m exp.hico_eval.compute_map \
     --subset $SUBSET
 
 python -m exp.hico_eval.sample_complexity_analysis \
-    --out_dir $OUT_DIR \
-    --ap_type "AP"
+    --out_dir $OUT_DIR
