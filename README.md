@@ -1,3 +1,35 @@
+# Requirements
+
+All dependencies will be installed in a python 3 virtual environment. 
+
+## Step 1: Create a python virtual environment
+
+```
+virtualenv -p python3.6 <path_to_new_virtual_env>
+```
+
+## Step 2: Activate the environment
+```
+source <path_to_new_virtual_env>/bin/activate
+```
+
+## Step 3: Install the dependencies
+
+Here are the main requirements: 
+- python 3.6.3
+- pytorch 0.3.1
+- numpy 1.14.2
+- tqdm 4.23.0
+- scipy 1.0.1
+- scikit-image 0.13.1
+- scikit-learn 0.19.1
+- h5py 2.7.1
+- plotly 2.5.1
+- tensorboard-logger 0.1.0
+- tensorflow 1.7.0 (cpu version works; required only for viewing logged data on tensorboard)
+
+Most of these can be installed with pip. There might be other dependencies which could be installed when prompted. Please check `pip_freeze_dump.txt` for version numbers before proceeding to install. Note that this txt file lists a lot more packages than needed (all packages installed in my virtual environment).  
+
 # Setup
 
 We will be executing all commands inside the root directory (`.../no_frills_hoi_det/`) that was created when you cloned the repository. 
@@ -64,6 +96,19 @@ The splits are needed for both training and evaluation. Class counts are needed 
 
 ## Download
 
+- Download [faster_rcnn_boxes.tar.gz](https://drive.google.com/open?id=1Y7NBgX8CeuAEqttUVRHJMb-9cXCJfIP6) to `hico_processed` directory
+- Extract the file in the `hico_processed` directory
+    ```
+    cd <path to hico_processed>
+    tar -xvzf faster_rcnn_boxes.tar.gz -C ./
+    rm faster_rcnn_boxes.tar.gz
+    cd <path to root>
+    ```
+- Write Faster-RCNN features to an hdf5 file
+    ```
+    python -m exp.hoi_classifier.data.write_faster_rcnn_feats_to_hdf5
+    ```
+
 ## Create your own
 
 ### Step 1: Prepare data for running faster-rcnn
@@ -88,13 +133,13 @@ For each image, Faster-RCNN predicts class scores (for 80 COCO classes) and box 
 python -m exp.detect_coco_objects.run --exp exp_select_and_evaluate_confident_boxes_in_hico
 ```
 
-This will create an hdf5 file called `selected_coco_cls_dets.h5py` in `hico_exp/select_confident_boxes_in_hico` directory. More details about the structure of this file can be found [here](exp/detect_coco_objects/data_description.md).
+This will create an hdf5 file called `selected_coco_cls_dets.h5py` in `hico_exp/select_confident_boxes_in_hico` directory. More details about the structure of this file can be found [here](docs/selected_coco_cls_dets.md).
 
-The above command also performs a recall based evaluation of the object detections to see if what fraction of ground truth human and object annotations are recalled by these predictions. These stats are written to the following files in the same directory:
+The above command also performs a recall based evaluation of the object detections to see what fraction of ground truth human and object annotations are recalled by these predictions. These stats are written to the following files in the same directory:
 - `eval_stats_boxes.json`: All selected detections irrespective of the predicted class are used for computing recall numbers.
 - `eval_stats_boxes_labels.json`: Only selected detections for the corresponding class are used for computing recall. 
 
-As shown in the table below, our run resulted on average 6 human and 94 object (all categories except human) candidate detections per image. `eval_stats_boxes_labels.json` shows recall of the *labelled* detections (for example only the 6 human candidates would be used as predictions to compute human recall), where as `eval_stats_boxes.json` shows recall values if all 100 (6+94) detections were considered as predictions for every human/object category irrespective of the labels predicted by faster-rcnn. Let us refer to this case as *unlabelled*. The idea is that using labels predicted by the detector helps prune out candidates to be examined for any HOI category by limiting to candidates for human and the object category involved in the HOI category. The significant reduction in candidates (and hence reduced computation for our model) is at the expense of a reasonable and expected drop in object recall due to detections missed by the object detector and our selection scheme. 
+As shown in the table below, our run resulted on average 6 human and 94 object (all categories except human) candidate detections per image. `eval_stats_boxes_labels.json` shows recall of the *labelled* detections (for example only the 6 human candidates would be used as predictions to compute human recall), where as `eval_stats_boxes.json` shows recall values if all 100 (6+94) detections were considered as predictions for every human/object category irrespective of the labels predicted by faster-rcnn. Let us refer to this case as *unlabelled*. The idea is that using labels predicted by the detector helps prune out candidates to be examined for any HOI category by limiting box-pair candidates to those constructed from detections for human and the object category involved in the said HOI category. The significant reduction in candidates (and hence reduced computation for our model and likely false positives) is at the expense of a reasonable and expected drop in object recall due to detections missed by the object detector and our selection scheme. 
 
 ||Labelled|Unlabelled|
 |:--|:------|:--------|
@@ -105,6 +150,21 @@ As shown in the table below, our run resulted on average 6 human and 94 object (
 | Object Recall | 70% | 86% |
 | Connection / Pair Recall | 59% | 77% | 
 
+# Detect Human Pose (or download the poses we provide)
+
+## Download
+
+- Download [human_pose.tar.gz](https://drive.google.com/open?id=1Y7NBgX8CeuAEqttUVRHJMb-9cXCJfIP6) to `hico_processed` directory
+- Extract the file in the `hico_processed` directory
+    ```
+    cd <path to hico_processed>
+    tar -xvzf human_pose.tar.gz -C ./
+    rm human_pose.tar.gz
+    cd <path to root>
+    ```
+
+## Create your own
+
 # Train HOI classifier
 
 ## Step 1: Generate HOI candidates from object candidates and cache Box and Pose features
@@ -113,7 +173,7 @@ We provide a simple bash script for this:
 bash exp/hoi_classifier/scripts/preprocess.sh
 ```
 This generates the following files in `hico_exp/hoi_candidates` directory:
-- `hoi_candidates_<subset>.hdf5` : Box pair candidates. More details [here](exp/hoi_classifier/data/data_description.md)
+- `hoi_candidates_<subset>.hdf5` : Box pair candidates. More details [here](docs/hoi_candidates.md)
 - `hoi_candidate_labels_<subset>.hdf5` : Binary labels for hoi candidates to be used during training
 - `hoi_candidates_box_feats_<subset>.hdf5` : Cached Box features
 - `hoi_candidates_pose_<subset>.hdf5` : Pose keypoints assigned to human bounding boxes
@@ -127,3 +187,49 @@ bash bash exp/hoi_classifier/scripts/train.sh <GPU ID>
 ```
 `<GPU ID>` specifies the GPU to use for training the model.
 
+This creates a directory called `factors_rcnn_det_prob_appearance_boxes_and_object_label_human_pose` in `hico_exp/hoi_classifier`. The name of the directory is automatically constructed based on the factors used in this model. The factors are enabled using appropriate flags in the `train.sh` file. 
+
+This directory is used to store the following:
+- constants needed for running the experiment
+    - data paths (`data_train/val_constants.json`)
+    - model hyperparameters (`model_constants.json` and `model.txt`) 
+    - training hyperparameters (`exp_constants.json`) 
+- tensorboard log files (`log/`)
+- model checkpoints (`models/`)
+
+### View Tensorboard Logs
+```
+tensorboard --logdir=./data_symlinks/hico_exp/hoi_classifier
+```
+
+### Time and Memory
+- The full model achieves best val set performance in about 30000 iterations in ~6hrs
+- GPU memory usage is under 3 GB
+- RAM utilization is under 1.5 GB
+
+# Evaluate Model
+
+## Step 1: Select the model to evaluate
+
+The model can be selected based on the validation loss logged in tensorboard and is usually around 30000 iterations. Let us call the selected iteration `<MODEL NUM>`
+
+![val_loss.png](imgs/val_loss.png)
+
+## Step 2: Make predictions for the test set
+
+```
+bash exp/hoi_classifier/scripts/eval.sh <GPU ID> <MODEL NUM>
+```
+
+This generates a `pred_hoi_dets.hdf5` file. The structure of the file is detailed [here](docs/pred_hoi_dets.md)
+
+## Step 3: Compute mAPs
+
+This is done by the `compute_map.sh` script in `exp/hico_eval` directory. Update variable `EXP_NAME` to the one you want to evaluate and `MODEL_NUM` to the selected `<MODEL NUM>` and run
+```
+bash exp/hico_eval/compute_map.sh
+```
+`EXP_NAME` defaults to `factors_rcnn_det_prob_appearance_boxes_and_object_label_human_pose` which is the model trained with all factors. 
+
+## Step 4: Visualize 
+[ride_bike](imgs/019_ride_bicycle/index.html)
