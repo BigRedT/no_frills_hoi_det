@@ -11,8 +11,8 @@ By [Tanmay Gupta](http://tanmaygupta.info), [Alexander Schwing](http://alexander
 - [Setup](#setup)
 - [Download the HICO-Det dataset](#download-the-hico-det-dataset)
 - [Process HICO-Det files](#process-hico-det-files)
-- [Run Object Detector (or download the detections we provide)](#run-object-detector-(or-download-the-detections-we-provide))
-- [Run Human Pose Detector (or download the poses we provide)](#run-human-pose-detector-(or-download-the-poses-we-provide))
+- [Run Object Detector (or download the detections we provide)](#run-object-detector-or-download-the-detections-we-provide)
+- [Run Human Pose Detector (or download the poses we provide)](#run-human-pose-detector-or-download-the-poses-we-provide)
 - [Train HOI classifier](#train-hoi-classifier)
 - [Evaluate Model](#evaluate-model)
 
