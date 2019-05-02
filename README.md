@@ -307,6 +307,7 @@ bash exp/hico_eval/compute_map.sh
 `EXP_NAME` defaults to `factors_rcnn_det_prob_appearance_boxes_and_object_label_human_pose` which is the model trained with all factors. The APs for each HOI category and overall performance are stored in the experiment directory with a relative path that looks like `mAP_eval/test_<MODEL NUM>/mAP.json`
 
 The mAP for the provided model for various category groups (based on number of training samples) are as follows:
+
 |Model|Full|Rare|Non-Rare|0-9|10-49|50-99|100-499|500-999|1000-9999|
 |:-|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 |HO-RCNN [1]|7.81|5.37|8.54|-|-|-|-|-|-|
