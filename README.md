@@ -15,6 +15,7 @@ By [Tanmay Gupta](http://tanmaygupta.info), [Alexander Schwing](http://alexander
 - [Run Human Pose Detector (or download the poses we provide)](#run-human-pose-detector-or-download-the-poses-we-provide)
 - [Train HOI classifier](#train-hoi-classifier)
 - [Evaluate Model](#evaluate-model)
+- [Pretrained model](#pretrained-model)
 
 # Overview
 This repository provides code to train and evaluate an HOI Detection model that demonstrates strong performance on the challenging HICO-Det benchmark...that too without frills!
@@ -354,5 +355,5 @@ python -m exp.hoi_classifier.vis.vis_object_aps_per_interaction
 An interactive version of the plot is available at `imgs/object_aps_per_interaction.html`.
 
 # Pretrained model
-- [trained_models](https://drive.google.com/drive/folders/1JVCYA_-ypYYsvNDiT8wThBs9ai_h7XOK?usp=sharing): This directory contains the selected checkpoint for our full model (with all factors). You may follow `exp/hoi_classifier/eval.py` script and the corresponding experiment launcher `exp_eval()` in `exp/hoi_classifier/run.py` to see load and use the trained model.  
+- [trained_models](https://drive.google.com/drive/folders/1JVCYA_-ypYYsvNDiT8wThBs9ai_h7XOK?usp=sharing): This directory contains the selected checkpoint for our full model (with all factors). You may follow `exp/hoi_classifier/eval.py` script and the corresponding experiment launcher `exp_eval()` in `exp/hoi_classifier/run.py` to see how to load and use the trained model.  
 - [top_boxes_per_hoi.zip](https://drive.google.com/file/d/1RXnkDfte5Bq8Q-Y81ZgRvG5Pod_LYIGL/view?usp=sharing): Top ranking detections visualized for all 600 HOI categories. Incredibly useful for identifying failure cases and improving the model!
