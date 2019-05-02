@@ -5,6 +5,18 @@ By [Tanmay Gupta](http://tanmaygupta.info), [Alexander Schwing](http://alexander
     <img src="imgs/teaser_wide.png">
 </p>
 
+# Content
+- [Overview](#overview)
+- [Requirements](#requirements)
+- [Setup](#setup)
+- [Download the HICO-Det dataset](#download-the-hico-det-dataset)
+- [Process HICO-Det files](#process-hico-det-files)
+- [Run Object Detector (or download the detections we provide)](#run-object-detector-(or-download-the-detections-we-provide))
+- [Run Human Pose Detector (or download the poses we provide)](#run-human-pose-detector-(or-download-the-poses-we-provide))
+- [Train HOI classifier](#train-hoi-classifier)
+- [Evaluate Model](#evaluate-model)
+
+# Overview
 This repository provides code to train and evaluate an HOI Detection model that demonstrates strong performance on the challenging HICO-Det benchmark...that too without frills!
 
 **Why do we call it a no-frills model?**
@@ -140,7 +152,7 @@ The splits are needed for both training and evaluation. Class counts are needed 
 
 ## Download
 
-- Download [faster_rcnn_boxes.tar.gz](https://drive.google.com/open?id=1Y7NBgX8CeuAEqttUVRHJMb-9cXCJfIP6) to `hico_processed` directory
+- Download [faster_rcnn_boxes.tar.gz](https://drive.google.com/file/d/1DdzvwSllYenT5Jt4DIu52mGG3uLgXX42/view?usp=sharing) to `hico_processed` directory
 - Extract the file in the `hico_processed` directory
     ```
     cd <path to hico_processed>
@@ -171,6 +183,10 @@ For each image with unique <global_id> the object detector writes the following 
 
 This step requires `faster_rcnn_im_in_out.json` file created in the previous step. I have created a fork of a popular Faster-RCNN pytorch implementation. This fork includes a script that takes the json file and writes the outputs to `hico_processed` in the required format. Please follow installation and execution instructions at [https://github.com/BigRedT/pytorch-faster-rcnn](https://github.com/BigRedT/pytorch-faster-rcnn)
 
+Once the faster-rcnn features are saved, we will write them all to a single hdf5 file using:
+```
+python -m exp.hoi_classifier.data.write_faster_rcnn_feats_to_hdf5
+```
 
 ### Step 3: Select candidate boxes for each object category from all predictions
 
@@ -200,7 +216,7 @@ As shown in the table below, our run resulted on average 6 human and 94 object (
 
 ## Download
 
-- Download [human_pose.tar.gz](https://drive.google.com/open?id=1Y7NBgX8CeuAEqttUVRHJMb-9cXCJfIP6) to `hico_processed` directory
+- Download [human_pose.tar.gz](https://drive.google.com/file/d/1Y7NBgX8CeuAEqttUVRHJMb-9cXCJfIP6/view?usp=sharing) to `hico_processed` directory
 - Extract the file in the `hico_processed` directory
     ```
     cd <path to hico_processed>
@@ -210,6 +226,19 @@ As shown in the table below, our run resulted on average 6 human and 94 object (
     ```
 
 ## Create your own
+
+We will use OpenPose to extract human pose. We used the official implementation available at [https://github.com/CMU-Perceptual-Computing-Lab/openpose](https://github.com/CMU-Perceptual-Computing-Lab/openpose). We used the latest version of the master branch of OpenPose available at the time (`commit: f430a79`). The branch has moved ahead by several commits since then and we haven't tested the latest version (though I would assume it works too). 
+
+To extract pose run the following replacing `<subset>` by `train2015` and `test2015`.
+
+```
+./build/examples/openpose/openpose.bin \
+    --image_dir <path to hico_clean>/images/<subset>/ \
+    --face \
+    --hand \
+    --write_json <path to hico_processed>/human_pose/<subset> \
+    --display 0
+```
 
 # Train HOI classifier
 
@@ -284,7 +313,7 @@ The mAP for the provided model for various category groups (based on number of t
 |InteractNet [2]|9.94|7.16|10.77|-|-|-|-|-|-|
 |GPNN [4]|13.11|9.34|14.23|-|-|-|-|-|-|
 |iCAN [3]|14.84|10.45|16.15|-|-|-|-|-|-|
-|No-Frills (Ours)|**17.07**|**11.5**|**18.74**|**11.5**|**11.63**|**14.57**|**21.85**|**25.42**|**41.54**|
+|**No-Frills**|**17.07**|**11.5**|**18.74**|**11.5**|**11.63**|**14.57**|**21.85**|**25.42**|**41.54**|
 
 ## Step 4: Visualize 
 
@@ -322,3 +351,7 @@ python -m exp.hoi_classifier.vis.vis_object_aps_per_interaction
 ![object_aps_per_interaction_snapshot.png](imgs/object_aps_per_interaction_snapshot.png)
 
 An interactive version of the plot is available at `imgs/object_aps_per_interaction.html`.
+
+# Pretrained model
+- [trained_models](https://drive.google.com/drive/folders/1JVCYA_-ypYYsvNDiT8wThBs9ai_h7XOK?usp=sharing): This directory contains the selected checkpoint for our full model (with all factors). You may follow `exp/hoi_classifier/eval.py` script and the corresponding experiment launcher `exp_eval()` in `exp/hoi_classifier/run.py` to see load and use the trained model.  
+- [top_boxes_per_hoi.zip](https://drive.google.com/file/d/1RXnkDfte5Bq8Q-Y81ZgRvG5Pod_LYIGL/view?usp=sharing): Top ranking detections visualized for all 600 HOI categories. Incredibly useful for identifying failure cases and improving the model!
