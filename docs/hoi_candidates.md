@@ -16,8 +16,8 @@ Stores information about HOI candidates such as bounding boxes, human and object
 
 ## HDF5 datasets description
 **`boxes_scores_rpn_ids_hoi_idx`** is a Nx13 matrix with each row containing the following in formation in order
-- human box coordinates (x,y,w,h)   [4]
-- object box coordinates (x,y,w,h)  [4]
+- human box coordinates (x1,y1,x2,y2)   [4]
+- object box coordinates (x1,y1,x2,y2)  [4]
 - human score   [1]
 - object score  [1]
 - human rpn id  [1]

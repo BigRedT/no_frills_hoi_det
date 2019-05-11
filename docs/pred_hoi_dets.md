@@ -14,7 +14,7 @@ This is the format in which the hoi detections from any model need to be saved i
 ```
 
 ## HDF5 datasets description
-**`human_obj_boxes_scores`** is a Nx9 (=4+4+1) dimensional numpy array with each row containing the box coordinates (`x,y,w,h` where `x,y` is the box center) for the human and object boxes, and score for the predicted hoi class. 
+**`human_obj_boxes_scores`** is a Nx9 (=4+4+1) dimensional numpy array with each row containing the box coordinates (`x1,y1,x2,y2`) for the human and object boxes, and score for the predicted hoi class. 
 
 **`start_end_ids`** is a 600x2 dimensional numpy array with i^th row containing the start and end row numbers in `box_scores_rpn_ids` for i^th class in the [list of hico classes](http://napoli18.eecs.umich.edu/public_html/data/hico_list_hoi.txt). Since the hoi class ids begin with '001', for an hoi class with id '006', the set of detections for a given `global_id` are obtained by 
 
