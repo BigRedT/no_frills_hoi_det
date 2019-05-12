@@ -18,7 +18,7 @@ By [Tanmay Gupta](http://tanmaygupta.info), [Alexander Schwing](http://alexander
 - [Pretrained model](#pretrained-model)
 
 # Overview
-This repository provides code to train and evaluate an HOI Detection model that demonstrates strong performance on the challenging HICO-Det benchmark...that too without frills!
+This repository provides code to train and evaluate an HOI Detection model (implemented in Pytorch) that demonstrates strong performance on the challenging HICO-Det benchmark...that too without frills!
 
 **Why do we call it a no-frills model?**
 
@@ -86,6 +86,8 @@ Here are the main requirements:
 - tensorflow 1.7.0 (cpu version works; required only for viewing logged data on tensorboard)
 
 Most of these can be installed with pip. There might be other dependencies which could be installed when prompted. Please check `pip_freeze_dump.txt` for version numbers before proceeding to install. Note that this txt file lists a lot more packages than needed (all packages installed in my virtual environment).  
+
+**Important:** This repository supports Pytorch 0.3.1 and is not compatible with version 0.4 or higher because of various breaking changes introduced in these versions like unification of Tensor and Variable, Scalar Tensors etc. See [Pytorch Migration Guide](https://pytorch.org/blog/pytorch-0_4_0-migration-guide/) for details if you would like to port the implementation to a newer version of Pytorch. 
 
 # Setup
 
