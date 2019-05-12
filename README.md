@@ -98,7 +98,7 @@ To begin, we will create a directory in the root directory called `data_symlinks
 - `hico_processed` -> directory where you want to store processed data required for training/evaluating models
 - `hico_exp` -> directory where you want to store outputs of model training and evaluation
 
-Creating these symlinks is useful if your hardware setup constrains where you keep your data. For example, if you want to store the dataset on the local drives, and code, processed files, and experiment data on the NFS to be shared across multiple servers (or risk getting kicked-off the servers by your Admin for hogging network I/O by putting everything on the NFS or hogging local disk space by putting everything on local drives! Or maybe your Admin knows how to setup the NFS and you don't have these problems)
+Creating these symlinks is useful if your hardware setup constrains where you keep your data. For example, if you want to store the dataset on the local drives, and code, processed files, and experiment data on the NFS to be shared across multiple servers
 
 
 ```
